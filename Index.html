@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO Election Voting System</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --pitch-bg: #e8f8f0;
+            --pitch-border: #27ae60;
+            --nominee-bg: #f9f9f9;
+            --nominee-border: #bdc3c7;
+            --text-main: #333;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1, h2 { text-align: center; color: var(--primary); }
+        .hidden { display: none !important; }
+        
+        /* Setup Page Styles */
+        .setup-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 600px; margin: 50px auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; width: 100%; }
+        button:hover { background: #34495e; }
+        button.secondary { background: #95a5a6; margin-top: 10px; }
+        .candidate-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .candidate-row input { flex: 2; }
+        .candidate-row select { flex: 1; }
+        .remove-btn { background: #e74c3c; width: auto; padding: 10px; }
+
+        /* Voting Page Styles */
+        .positions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 30px; }
+        .position-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .position-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
+        
+        .candidate-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; margin-bottom: 8px; border-radius: 8px; border: 1px solid transparent; }
+        .type-pitch { background-color: var(--pitch-bg); border-color: var(--pitch-border); }
+        .type-pitch::after { content: "🎤 Pitching"; font-size: 0.7rem; background: var(--pitch-border); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 10px; }
+        .type-nominee { background-color: var(--nominee-bg); border-color: var(--nominee-border); color: #555; }
+        .type-nominee::after { content: "📌 Nominee"; font-size: 0.7rem; background: var(--nominee-border); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 10px; }
+        
+        .vote-btn { background-color: var(--primary); color: white; border: none; padding: 5px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; }
+        .vote-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* Results */
+        .results-area { margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ddd; }
+        .result-row { display: flex; align-items: center; margin-bottom: 5px; font-size: 0.9rem; }
+        .res-name { width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .res-bar-bg { flex-grow: 1; background: #eee; height: 8px; border-radius: 4px; margin: 0 10px; overflow: hidden; }
+        .res-bar-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s ease; }
+        .res-count { width: 30px; text-align: right; font-weight: bold; }
+        
+        .locked-message { text-align: center; color: #7f8c8d; font-style: italic; padding: 10px; background: #f9f9f9; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- VIEW 1: SETUP PAGE (Only visible if no data in DB) -->
+    <div id="setup-view" class="hidden">
+        <div class="setup-box">
+            <h2>🛠️ Election Setup</h2>
+            <p>Enter candidates for each position. Once saved, voting begins.</p>
+            <div class="form-group">
+                <label>Setup Password (Default: admin123)</label>
+                <input type="password" id="setup-password" placeholder="Enter password">
+            </div>
+            <div id="positions-form-container"></div>
+            <button onclick="saveElectionConfig()">🚀 Start Election</button>
+        </div>
+    </div>
+
+    <!-- VIEW 2: VOTING PAGE -->
+    <div id="voting-view" class="hidden">
+        <header>
+            <h1>🗳️ NGO Annual Election</h1>
+            <p>Select your candidate. Results appear immediately after you vote.</p>
+        </header>
+        <div id="positions-grid" class="positions-grid"></div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading-view" style="text-align: center; margin-top: 50px;">
+        <h2>Loading System...</h2>
+    </div>
+</div>
+
+<!-- Firebase SDKs (Modular via CDN) -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, where, getDocs, updateDoc, increment, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // --- 在这里粘贴你的 Firebase 配置 ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXUttZVQ3u3N-1UJW7uF9h6j6TW0HGcKQ",
+        authDomain: "balsa-election.firebaseapp.com",
+        projectId: "balsa-election",
+        storageBucket: "balsa-election.firebasestorage.app",
+        messagingSenderId: "201567605989",
+        appId: "1:201567605989:web:94cbfd4c0ced3289ef700c",
+        measurementId: "G-EC7QSC9BMV"
+    };
+    // ----------------------------------
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Constants
+    const POSITIONS = [
+        "President", "Co-President", "VP-EO", "VP-IO", "DoHR", 
+        "DoM", "DoO", "DoPD", "DoF", "DoDEI"
+    ];
+    const SETUP_PASSWORD = "admin123"; // Simple client-side check
+
+    // State
+    let localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || [];
+
+    // DOM Elements
+    const setupView = document.getElementById('setup-view');
+    const votingView = document.getElementById('voting-view');
+    const loadingView = document.getElementById('loading-view');
+    const positionsFormContainer = document.getElementById('positions-form-container');
+    const positionsGrid = document.getElementById('positions-grid');
+
+    // --- INITIALIZATION ---
+    async function init() {
+        try {
+            const configDoc = await getDoc(doc(db, "system", "config"));
+            if (configDoc.exists()) {
+                // Election already configured, show voting page
+                showVotingPage();
+            } else {
+                // No config, show setup page
+                showSetupPage();
+            }
+        } catch (error) {
+            console.error("Error checking config:", error);
+            alert("Database connection error. Please check Firebase configuration.");
+            loadingView.classList.add('hidden');
+        }
+    }
+
+    // --- SETUP PAGE LOGIC ---
+    function showSetupPage() {
+        loadingView.classList.add('hidden');
+        setupView.classList.remove('hidden');
+        
+        // Generate form fields for each position
+        POSITIONS.forEach(pos => {
+            const div = document.createElement('div');
+            div.style.marginBottom = "20px";
+            div.style.borderBottom = "1px solid #eee";
+            div.style.paddingBottom = "10px";
+            div.innerHTML = `<h3>${pos}</h3><div id="form-${pos}"></div><button class="secondary" onclick="window.addCandidateField('${pos}')" style="width:auto; font-size:0.8rem">+ Add Candidate</button>`;
+            positionsFormContainer.appendChild(div);
+            // Add one default field
+            window.addCandidateField(pos);
+        });
+    }
+
+    // Exposed to window for HTML onclick
+    window.addCandidateField = (position) => {
+        const container = document.getElementById(`form-${position}`);
+        const row = document.createElement('div');
+        row.className = 'candidate-row';
+        row.innerHTML = `
+            <input type="text" placeholder="Candidate Name" class="cand-name">
+            <select class="cand-type">
+                <option value="pitch">Pitching (Green)</option>
+                <option value="nominee">Nominee (Gray)</option>
+            </select>
+            <button class="remove-btn" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(row);
+    };
+
+    window.saveElectionConfig = async () => {
+        const password = document.getElementById('setup-password').value;
+        if (password !== SETUP_PASSWORD) {
+            alert("Incorrect Setup Password!");
+            return;
+        }
+
+        const candidatesData = [];
+        let isValid = true;
+
+        POSITIONS.forEach(pos => {
+            const rows = document.querySelectorAll(`#form-${pos} .candidate-row`);
+            rows.forEach(row => {
+                const name = row.querySelector('.cand-name').value.trim();
+                const type = row.querySelector('.cand-type').value;
+                if (name) {
+                    candidatesData.push({ position: pos, name, type, votes: 0 });
+                }
+            });
+        });
+
+        if (candidatesData.length === 0) {
+            alert("Please add at least one candidate.");
+            return;
+        }
+
+        try {
+            // 1. Save Config Flag
+            await setDoc(doc(db, "system", "config"), { status: "active", createdAt: new Date() });
+            
+            // 2. Save Candidates
+            const batchPromises = candidatesData.map(data => 
+                addDoc(collection(db, "candidates"), data)
+            );
+            await Promise.all(batchPromises);
+
+            alert("Election Started Successfully!");
+            location.reload();
+        } catch (e) {
+            console.error(e);
+            alert("Error saving to database. Check console.");
+        }
+    };
+
+    // --- VOTING PAGE LOGIC ---
+    function showVotingPage() {
+        loadingView.classList.add('hidden');
+        votingView.classList.remove('hidden');
+        loadPositionsRealtime();
+    }
+
+    function loadPositionsRealtime() {
+        // Listen to all candidates
+        const q = query(collection(db, "candidates"));
+        
+        onSnapshot(q, (snapshot) => {
+            const candidatesByPos = {};
+            POSITIONS.forEach(p => candidatesByPos[p] = []);
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (candidatesByPos[data.position]) {
+                    candidatesByPos[data.position].push({ id: doc.id, ...data });
+                }
+            });
+
+            renderVotingGrid(candidatesByPos);
+        });
+    }
+
+    function renderVotingGrid(candidatesByPos) {
+        positionsGrid.innerHTML = '';
+        
+        POSITIONS.forEach(pos => {
+            const candidates = candidatesByPos[pos];
+            const hasVoted = localVotes.includes(pos);
+            
+            const card = document.createElement('div');
+            card.className = 'position-card';
+            
+            let candidatesHTML = '';
+            let resultsHTML = '';
+            let totalVotes = 0;
+
+            // Calculate total votes for percentage
+            candidates.forEach(c => totalVotes += c.votes);
+
+            candidates.forEach(c => {
+                const typeClass = c.type === 'pitch' ? 'type-pitch' : 'type-nominee';
+                const btnDisabled = hasVoted ? 'disabled' : '';
+                const btnText = hasVoted ? 'Voted' : 'Vote';
+                
+                // Candidate Button
+                candidatesHTML += `
+                    <li class="candidate-item ${typeClass}">
+                        <span>${c.name}</span>
+                        <button class="vote-btn" onclick="window.castVote('${pos}', '${c.id}')" ${btnDisabled}>${btnText}</button>
+                    </li>
+                `;
+
+                // Result Bar (Hidden if not voted)
+                const percentage = totalVotes === 0 ? 0 : Math.round((c.votes / totalVotes) * 100);
+                resultsHTML += `
+                    <div class="result-row">
+                        <div class="res-name" title="${c.name}">${c.name}</div>
+                        <div class="res-bar-bg">
+                            <div class="res-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="res-count">${c.votes}</div>
+                    </div>
+                `;
+            });
+
+            const resultsSection = hasVoted 
+                ? `<div class="results-area">${resultsHTML}</div>` 
+                : `<div class="locked-message">🔒 Vote to see results</div>`;
+
+            card.innerHTML = `
+                <div class="position-title">${pos}</div>
+                <ul class="candidate-list" style="list-style:none; padding:0;">
+                    ${candidatesHTML}
+                </ul>
+                ${resultsSection}
+            `;
+            positionsGrid.appendChild(card);
+        });
+    }
+
+    // Exposed to window for HTML onclick
+    window.castVote = async (position, candidateId) => {
+        if (!confirm(`Confirm vote for ${position}?`)) return;
+
+        try {
+            const candidateRef = doc(db, "candidates", candidateId);
+            await updateDoc(candidateRef, {
+                votes: increment(1)
+            });
+
+            // Save local state
+            localVotes.push(position);
+            localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
+            
+            // UI will update automatically via onSnapshot
+        } catch (e) {
+            console.error("Voting error:", e);
+            alert("Failed to cast vote. Please try again.");
+        }
+    };
+
+    // Start App
+    init();
+
+</script>
+</body>
+</html>

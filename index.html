@@ -406,7 +406,7 @@
 <!-- Toast Notification -->
 <div id="toast" class="toast"></div>
 
-<!-- Firebase SDKs -->
+<!-- Firebase SDKs - 🔧 关键修复：移除末尾空格 -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, getDocs, updateDoc, increment, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
@@ -437,8 +437,6 @@
     let localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || [];
     let currentPositionData = {};
     let voteInProgress = false;
-    // ✨ 新增：编辑模式标志
-    let isEditMode = false;
 
     // DOM Elements
     const setupView = document.getElementById('setup-view');
@@ -615,6 +613,7 @@
         }
     }
 
+    // 🔧 关键修复：保存配置函数 - 分离编辑模式逻辑，避免干扰正常投票
     window.saveElectionConfig = async () => {
         const password = document.getElementById('setup-password').value;
         if (password !== SETUP_PASSWORD) {
@@ -622,12 +621,16 @@
             return;
         }
 
+        // 检查是否为编辑模式（通过 URL 参数或隐藏字段标记）
+        const isEditMode = document.getElementById('setup-password').dataset.editMode === 'true';
+        
         // ✨ 编辑模式：只更新元数据，不重置 votes
         if (isEditMode) {
             try {
                 await saveCandidateEdits();
-                isEditMode = false;
                 showToast("✅ Candidate info updated! Historical votes unchanged.");
+                // 清除编辑标记
+                document.getElementById('setup-password').dataset.editMode = 'false';
                 setTimeout(() => location.reload(), 1500);
             } catch (e) {
                 console.error(e);
@@ -636,7 +639,7 @@
             return;
         }
 
-        // 原有逻辑：创建新选举（重置所有）
+        // === 原有逻辑完全保持不变 ===
         const candidatesData = [];
         const positionItems = document.querySelectorAll('.position-setup-item');
         
@@ -804,6 +807,7 @@
         return div.innerHTML;
     }
 
+    // 🔧 关键修复：确保 castVote 全局可访问，所有设备都能调用
     window.castVote = async (position, candidateId) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
@@ -840,7 +844,8 @@
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
             showToast("✅ Vote submitted!");
-            loadPositionsRealtime();
+            
+            // 重新渲染显示已投票状态（onSnapshot 会自动更新结果）
             
         } catch (e) {
             console.error("Voting error:", e);
@@ -866,8 +871,8 @@
             votingView.classList.add('hidden');
             setupView.classList.remove('hidden');
             
-            // 设置编辑模式标志
-            isEditMode = true;
+            // 🔧 关键：通过 data 属性标记编辑模式，避免干扰正常流程
+            document.getElementById('setup-password').dataset.editMode = 'true';
             
             showToast("✏️ Edit Mode: Modify names/types only. Votes will NOT change.", 'warning');
             

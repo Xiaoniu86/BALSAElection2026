@@ -399,34 +399,10 @@
             <h3>⚠️ Admin Only</h3>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
                 <button onclick="showResetConfirmation()">🔄 Reset & Edit Candidates</button>
-                <!-- ✨ 唯一新增：编辑按钮 -->
                 <button class="secondary" onclick="openAdminEdit()">✏️ Edit Info Only</button>
             </div>
         </div>
 
-
-        <!-- VIEW 2: VOTING PAGE -->
-        <div id="voting-view" class="hidden">
-            <header style="text-align: center; margin-bottom: 20px;">
-                <h1>🗳️ NGO Annual Election</h1>
-                <p style="color: #666;">Select your candidate for each position. Results appear immediately after voting.</p>
-            </header>
-        <!-- Election Info -->
-        <div id="election-info" class="election-info hidden">
-            📋 Election ID: <strong id="election-id-display">-</strong> | 
-            Started: <strong id="election-date-display">-</strong>
-        </div>
-
-        <!-- Reset Button Bar -->
-        <div class="reset-bar">
-            <h3>⚠️ Admin Only</h3>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-                <button onclick="showResetConfirmation()">🔄 Reset & Edit Candidates</button>
-                <!-- ✨ 新增编辑按钮 -->
-                <button class="secondary" onclick="openAdminEdit()">✏️ Edit Info Only</button>
-            </div>
-        </div>
-        
         <div id="positions-grid" class="positions-grid"></div>
         
         <div style="text-align: center; margin-top: 30px; color: #999;">
@@ -462,10 +438,10 @@
 <!-- Toast Notification -->
 <div id="toast" class="toast"></div>
 
-<!-- Firebase SDKs - 保持您原始路径不变 -->
+<!-- Firebase SDKs -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js  ";
-    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, getDocs, updateDoc, increment, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js  ";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, getDocs, updateDoc, increment, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -495,7 +471,6 @@
     let voteInProgress = false;
     let existingCandidates = [];
     let currentElectionId = null;
-    // ✨ 新增：编辑模式标志
     let isEditMode = false;
 
     // DOM Elements
@@ -615,7 +590,6 @@
             candidates.forEach(c => {
                 const row = document.createElement('div');
                 row.className = 'candidate-row';
-                // 🔧 修复：添加 data-doc-id 属性，用于编辑时直接定位文档
                 row.innerHTML = `
                     <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}" data-doc-id="${c.id}">
                     <select class="cand-type">
@@ -665,10 +639,9 @@
     };
 
     // =====================================================
-    // ✨ 新增功能 START: 编辑候选人 (4个小函数，完全独立)
+    // ✨ EDIT FUNCTIONALITY START
     // =====================================================
     
-    // 1. 加载现有候选人到编辑表单（带 doc-id，不重置 votes）
     async function loadCandidatesForEdit() {
         positionsFormContainer.innerHTML = '';
         const q = query(collection(db, "candidates"));
@@ -685,7 +658,6 @@
         Object.keys(candidatesByPos).forEach(pos => addPositionField(pos, candidatesByPos[pos]));
     }
 
-    // 2. 保存编辑：只更新元数据，绝不触碰 votes 字段
     async function saveCandidateEdits() {
         const positionItems = document.querySelectorAll('.position-setup-item');
         for (const item of positionItems) {
@@ -693,13 +665,11 @@
             const candidateRows = item.querySelectorAll('.candidate-row');
             for (const row of candidateRows) {
                 const nameInput = row.querySelector('.cand-name');
-                const docId = nameInput?.dataset.docId;  // 🔧 修复：直接从 data-doc-id 获取
-                if (!docId) continue;  // 新添加的候选人没有 docId，跳过
+                const docId = nameInput?.dataset.docId;
+                if (!docId) continue;
                 const name = nameInput.value.trim();
                 const type = row.querySelector('.cand-type').value;
                 if (name) {
-                    // 🔐 关键：只更新 name/type/position，votes 字段完全隔离
-                    // 🔧 修复：直接用 docId 更新，无需 where 查询
                     await updateDoc(doc(db, "candidates", docId), {
                         position: positionName,
                         name: name,
@@ -710,7 +680,6 @@
         }
     }
 
-    // 3. 打开编辑模式：密码验证 + 加载数据 + 切换视图
     window.openAdminEdit = async () => {
         const password = prompt("🔒 Enter Admin Password:");
         if (password !== SETUP_PASSWORD) {
@@ -723,7 +692,6 @@
             votingView.classList.add('hidden');
             setupView.classList.remove('hidden');
             isEditMode = true;
-            // 临时修改按钮文字提示编辑模式
             const saveBtn = document.querySelector('#setup-view button[onclick="saveElectionConfig()"]');
             saveBtn.dataset.originalText = saveBtn.textContent;
             saveBtn.textContent = '💾 Save Edits (Votes Unchanged)';
@@ -734,7 +702,7 @@
         }
     };
     
-    // ✨ 新增功能 END
+    // ✨ EDIT FUNCTIONALITY END
     // =====================================================
 
     window.saveElectionConfig = async () => {
@@ -744,12 +712,11 @@
             return;
         }
 
-        // ✨ 编辑模式分支：只更新元数据，不创建新数据，不重置 votes
+        // ✨ Edit mode branch
         if (isEditMode) {
             try {
                 await saveCandidateEdits();
                 isEditMode = false;
-                // 恢复按钮文字
                 const saveBtn = document.querySelector('#setup-view button[onclick="saveElectionConfig()"]');
                 if (saveBtn.dataset.originalText) {
                     saveBtn.textContent = saveBtn.dataset.originalText;
@@ -760,10 +727,10 @@
                 console.error(e);
                 showToast("Edit failed: " + e.message, 'error');
             }
-            return; // ✅ 编辑模式结束，不执行下方新建逻辑
+            return;
         }
 
-        // === 以下原有逻辑 100% 保持不变 ===
+        // === Original logic unchanged ===
         const candidatesData = [];
         const positionItems = document.querySelectorAll('.position-setup-item');
         
@@ -799,7 +766,6 @@
         }
 
         try {
-            // ✅ 生成新的选举 ID（每次保存都生成新的）
             const newElectionId = generateElectionId();
             
             if (existingCandidates.length > 0) {
@@ -815,7 +781,7 @@
             await setDoc(doc(db, "system", "config"), { 
                 status: "active", 
                 createdAt: new Date(),
-                electionId: newElectionId, // ✅ 保存选举 ID
+                electionId: newElectionId,
                 lastReset: new Date()
             });
             
@@ -824,7 +790,6 @@
             );
             await Promise.all(batchPromises);
 
-            // ✅ 清除本地投票记录（因为选举 ID 变了）
             localStorage.removeItem('ngo_voted_positions');
             
             showToast("✅ Election " + (existingCandidates.length > 0 ? "Restarted" : "Started") + " Successfully!");
@@ -842,7 +807,6 @@
         votingView.classList.remove('hidden');
         setupView.classList.add('hidden');
         
-        // ✅ 显示选举信息
         currentElectionId = configData.electionId || 'UNKNOWN';
         electionIdDisplay.textContent = currentElectionId;
         if (configData.createdAt) {
@@ -851,10 +815,8 @@
         }
         electionInfo.classList.remove('hidden');
         
-        // ✅ 检查本地存储的选举 ID 是否匹配
         const storedElectionId = localStorage.getItem('ngo_election_id');
         if (storedElectionId !== currentElectionId) {
-            // 选举 ID 不匹配，说明是新选举，清除旧投票记录
             localStorage.removeItem('ngo_voted_positions');
             localStorage.setItem('ngo_election_id', currentElectionId);
             localVotes = {};
@@ -904,7 +866,6 @@
         
         positions.forEach(pos => {
             const candidates = candidatesByPos[pos];
-            // ✅ 使用对象存储，key 为职位名
             const hasVoted = localVotes[pos] === true;
             
             const card = document.createElement('div');
@@ -968,7 +929,6 @@
         return div.innerHTML;
     }
 
-    // Cast Vote
     window.castVote = async (position, candidateId) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
@@ -977,7 +937,6 @@
         
         const normalizedPosition = position.trim();
         
-        // ✅ 检查是否已投过这个职位
         if (localVotes[normalizedPosition] === true) {
             showToast("You already voted for this position!", 'error');
             return;
@@ -1001,7 +960,6 @@
                 votes: increment(1)
             });
 
-            // ✅ 使用对象存储投票记录
             localVotes[normalizedPosition] = true;
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
@@ -1048,7 +1006,6 @@
                 await batch.commit();
             }
             
-            // ✅ 删除 config（触发回到 Setup 页面）
             await deleteDoc(doc(db, "system", "config"));
             
             showToast("✅ Reset successfully! Returning to Setup...");

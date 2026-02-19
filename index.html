@@ -397,10 +397,7 @@
         <!-- Reset Button Bar -->
         <div class="reset-bar">
             <h3>⚠️ Admin Only</h3>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-                <button onclick="showResetConfirmation()">🔄 Reset & Edit Candidates</button>
-                <button class="secondary" onclick="openAdminEdit()">✏️ Edit Info Only</button>
-            </div>
+            <button onclick="showResetConfirmation()">🔄 Reset & Edit Candidates</button>
         </div>
 
         <div id="positions-grid" class="positions-grid"></div>
@@ -470,8 +467,7 @@
     let currentPositionData = {};
     let voteInProgress = false;
     let existingCandidates = [];
-    let currentElectionId = null;
-    let isEditMode = false;
+    let currentElectionId = null; // ✅ 新增：当前选举 ID
 
     // DOM Elements
     const setupView = document.getElementById('setup-view');
@@ -591,7 +587,7 @@
                 const row = document.createElement('div');
                 row.className = 'candidate-row';
                 row.innerHTML = `
-                    <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}" data-doc-id="${c.id}">
+                    <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}">
                     <select class="cand-type">
                         <option value="pitch" ${c.type === 'pitch' ? 'selected' : ''}>🎤 Pitching (Green)</option>
                         <option value="nominee" ${c.type === 'nominee' ? 'selected' : ''}>📌 Nominee (Gray)</option>
@@ -638,73 +634,6 @@
         }
     };
 
-    // =====================================================
-    // ✨ EDIT FUNCTIONALITY START
-    // =====================================================
-    
-    async function loadCandidatesForEdit() {
-        positionsFormContainer.innerHTML = '';
-        const q = query(collection(db, "candidates"));
-        const snapshot = await getDocs(q);
-        
-        const candidatesByPos = {};
-        snapshot.forEach(docSnapshot => {
-            const data = docSnapshot.data();
-            const pos = data.position;
-            if (!candidatesByPos[pos]) candidatesByPos[pos] = [];
-            candidatesByPos[pos].push({ id: docSnapshot.id, ...data });
-        });
-        
-        Object.keys(candidatesByPos).forEach(pos => addPositionField(pos, candidatesByPos[pos]));
-    }
-
-    async function saveCandidateEdits() {
-        const positionItems = document.querySelectorAll('.position-setup-item');
-        for (const item of positionItems) {
-            const positionName = item.querySelector('.position-title-input').value.trim();
-            const candidateRows = item.querySelectorAll('.candidate-row');
-            for (const row of candidateRows) {
-                const nameInput = row.querySelector('.cand-name');
-                const docId = nameInput?.dataset.docId;
-                if (!docId) continue;
-                const name = nameInput.value.trim();
-                const type = row.querySelector('.cand-type').value;
-                if (name) {
-                    await updateDoc(doc(db, "candidates", docId), {
-                        position: positionName,
-                        name: name,
-                        type: type
-                    });
-                }
-            }
-        }
-    }
-
-    window.openAdminEdit = async () => {
-        const password = prompt("🔒 Enter Admin Password:");
-        if (password !== SETUP_PASSWORD) {
-            showToast("Incorrect Admin Password!", 'error');
-            return;
-        }
-        try {
-            showToast("Loading candidates...");
-            await loadCandidatesForEdit();
-            votingView.classList.add('hidden');
-            setupView.classList.remove('hidden');
-            isEditMode = true;
-            const saveBtn = document.querySelector('#setup-view button[onclick="saveElectionConfig()"]');
-            saveBtn.dataset.originalText = saveBtn.textContent;
-            saveBtn.textContent = '💾 Save Edits (Votes Unchanged)';
-            showToast("✏️ Edit Mode: Change names/types only. Historical votes SAFE.", 'warning');
-        } catch (e) {
-            console.error("Edit load error:", e);
-            showToast("Failed: " + e.message, 'error');
-        }
-    };
-    
-    // ✨ EDIT FUNCTIONALITY END
-    // =====================================================
-
     window.saveElectionConfig = async () => {
         const password = document.getElementById('setup-password').value;
         if (password !== SETUP_PASSWORD) {
@@ -712,25 +641,6 @@
             return;
         }
 
-        // ✨ Edit mode branch
-        if (isEditMode) {
-            try {
-                await saveCandidateEdits();
-                isEditMode = false;
-                const saveBtn = document.querySelector('#setup-view button[onclick="saveElectionConfig()"]');
-                if (saveBtn.dataset.originalText) {
-                    saveBtn.textContent = saveBtn.dataset.originalText;
-                }
-                showToast("✅ Candidate info updated! Votes unchanged.");
-                setTimeout(() => location.reload(), 1500);
-            } catch (e) {
-                console.error(e);
-                showToast("Edit failed: " + e.message, 'error');
-            }
-            return;
-        }
-
-        // === Original logic unchanged ===
         const candidatesData = [];
         const positionItems = document.querySelectorAll('.position-setup-item');
         
@@ -766,6 +676,7 @@
         }
 
         try {
+            // ✅ 生成新的选举 ID（每次保存都生成新的）
             const newElectionId = generateElectionId();
             
             if (existingCandidates.length > 0) {
@@ -781,7 +692,7 @@
             await setDoc(doc(db, "system", "config"), { 
                 status: "active", 
                 createdAt: new Date(),
-                electionId: newElectionId,
+                electionId: newElectionId, // ✅ 保存选举 ID
                 lastReset: new Date()
             });
             
@@ -790,6 +701,7 @@
             );
             await Promise.all(batchPromises);
 
+            // ✅ 清除本地投票记录（因为选举 ID 变了）
             localStorage.removeItem('ngo_voted_positions');
             
             showToast("✅ Election " + (existingCandidates.length > 0 ? "Restarted" : "Started") + " Successfully!");
@@ -807,6 +719,7 @@
         votingView.classList.remove('hidden');
         setupView.classList.add('hidden');
         
+        // ✅ 显示选举信息
         currentElectionId = configData.electionId || 'UNKNOWN';
         electionIdDisplay.textContent = currentElectionId;
         if (configData.createdAt) {
@@ -815,8 +728,10 @@
         }
         electionInfo.classList.remove('hidden');
         
+        // ✅ 检查本地存储的选举 ID 是否匹配
         const storedElectionId = localStorage.getItem('ngo_election_id');
         if (storedElectionId !== currentElectionId) {
+            // 选举 ID 不匹配，说明是新选举，清除旧投票记录
             localStorage.removeItem('ngo_voted_positions');
             localStorage.setItem('ngo_election_id', currentElectionId);
             localVotes = {};
@@ -866,6 +781,7 @@
         
         positions.forEach(pos => {
             const candidates = candidatesByPos[pos];
+            // ✅ 使用对象存储，key 为职位名
             const hasVoted = localVotes[pos] === true;
             
             const card = document.createElement('div');
@@ -929,6 +845,7 @@
         return div.innerHTML;
     }
 
+    // Cast Vote
     window.castVote = async (position, candidateId) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
@@ -937,6 +854,7 @@
         
         const normalizedPosition = position.trim();
         
+        // ✅ 检查是否已投过这个职位
         if (localVotes[normalizedPosition] === true) {
             showToast("You already voted for this position!", 'error');
             return;
@@ -960,6 +878,7 @@
                 votes: increment(1)
             });
 
+            // ✅ 使用对象存储投票记录
             localVotes[normalizedPosition] = true;
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
@@ -1006,6 +925,7 @@
                 await batch.commit();
             }
             
+            // ✅ 删除 config（触发回到 Setup 页面）
             await deleteDoc(doc(db, "system", "config"));
             
             showToast("✅ Reset successfully! Returning to Setup...");

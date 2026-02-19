@@ -18,109 +18,380 @@
             --warning: #f39c12;
             --info: #17a2b8;
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: var(--text-main); line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        h1, h2 { text-align: center; color: var(--primary); margin-bottom: 10px; }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1, h2 { text-align: center; color: var(--primary); }
         .hidden { display: none !important; }
         
-        .setup-box { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); max-width: 800px; margin: 40px auto; }
+        /* Setup Page Styles */
+        .setup-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 800px; margin: 50px auto; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary); }
-        input, select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
-        input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(52,152,219,0.2); }
-        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
-        button:hover { background: #34495e; transform: translateY(-1px); }
-        button.secondary { background: #95a5a6; }
-        button.secondary:hover { background: #7f8c8d; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        button:hover { background: #34495e; transform: scale(1.02); }
+        button.secondary { background: #95a5a6; margin-top: 10px; }
         button.danger { background: var(--danger); }
         button.danger:hover { background: #c0392b; }
+        button.success { background: var(--success); }
+        button.success:hover { background: #1e8449; }
+        button.warning { background: var(--warning); }
+        button.warning:hover { background: #d68910; }
         button.info { background: var(--info); }
         button.info:hover { background: #138496; }
         
-        .position-setup-item { background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
-        .position-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px; }
-        .position-title-input { flex: 1; min-width: 200px; font-weight: 600; font-size: 1.1rem; padding: 8px 12px; }
-        .remove-position-btn { background: var(--danger); padding: 6px 14px; font-size: 0.9rem; }
-        .candidate-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+        .position-setup-item { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 20px;
+        }
+        .position-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .position-title-input {
+            flex: 1;
+            min-width: 200px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .remove-position-btn { 
+            background: var(--danger); 
+            padding: 5px 15px; 
+            font-size: 0.9rem;
+        }
+        
+        .candidate-row { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 10px; 
+            align-items: center; 
+            flex-wrap: wrap;
+        }
         .candidate-row input { flex: 2; min-width: 150px; }
         .candidate-row select { flex: 1; min-width: 120px; }
-        .remove-btn { background: var(--danger); width: auto; padding: 8px 14px; }
-        .add-position-btn { width: 100%; margin: 20px 0 10px; background: var(--accent); padding: 12px; }
+        .remove-btn { background: var(--danger); width: auto; padding: 8px 15px; }
+
+        .add-position-btn {
+            width: 100%;
+            margin: 15px 0;
+            background: var(--accent);
+        }
         .add-position-btn:hover { background: #2980b9; }
 
-        .positions-grid { display: grid; grid-template-columns: 1fr; gap: 25px; margin-top: 30px; }
-        @media (min-width: 768px) { .positions-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1024px) { .positions-grid { grid-template-columns: repeat(3, 1fr); } }
-
-        .position-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        .position-title { font-size: 1.3rem; font-weight: 700; color: var(--primary); border-bottom: 3px solid var(--accent); padding-bottom: 12px; margin-bottom: 15px; text-align: center; }
+        /* Voting Page Styles */
+        .positions-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 25px; 
+            margin-top: 30px; 
+        }
         
-        .candidate-item { display: grid; grid-template-columns: 1fr auto; gap: 15px; padding: 12px 15px; margin-bottom: 10px; border-radius: 8px; border: 2px solid transparent; align-items: center; }
-        .type-pitch { background-color: var(--pitch-bg); border-color: var(--pitch-border); }
-        .type-pitch .candidate-name::after { content: "🎤 Pitching"; font-size: 0.75rem; background: var(--pitch-border); color: white; padding: 3px 8px; border-radius: 4px; margin-left: 12px; }
-        .type-nominee { background-color: var(--nominee-bg); border-color: var(--nominee-border); color: #555; }
-        .type-nominee .candidate-name::after { content: "📌 Nominee"; font-size: 0.75rem; background: var(--nominee-border); color: white; padding: 3px 8px; border-radius: 4px; margin-left: 12px; }
-        .candidate-name { font-size: 1rem; font-weight: 500; word-break: break-word; }
+        @media (min-width: 768px) {
+            .positions-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+        }
         
-        .vote-btn { background-color: var(--primary); color: white; border: none; padding: 8px 22px; border-radius: 25px; cursor: pointer; font-size: 0.95rem; min-width: 80px; transition: all 0.2s; }
-        .vote-btn:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
-        .vote-btn:hover:not(:disabled) { background-color: #34495e; transform: scale(1.05); }
-        .vote-btn.voted { background-color: var(--success); }
+        @media (min-width: 1024px) {
+            .positions-grid { 
+                grid-template-columns: repeat(3, 1fr); 
+            }
+        }
 
-        .results-area { margin-top: 15px; padding-top: 15px; border-top: 2px dashed #eee; }
-        .result-row { display: grid; grid-template-columns: 2fr 3fr 1fr; align-items: center; margin-bottom: 10px; font-size: 0.95rem; gap: 12px; }
-        .res-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
-        .res-bar-bg { background: #ecf0f1; height: 14px; border-radius: 7px; overflow: hidden; }
-        .res-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #2ecc71); width: 0%; transition: width 0.6s ease; border-radius: 7px; }
-        .res-count { text-align: right; font-weight: 700; color: var(--primary); }
-        .locked-message { text-align: center; color: #7f8c8d; font-style: italic; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 10px; }
+        .position-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        
+        .position-title { 
+            font-size: 1.3rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--accent); 
+            padding-bottom: 12px; 
+            margin-bottom: 15px; 
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .candidate-item { 
+            display: grid; 
+            grid-template-columns: 1fr auto; 
+            gap: 15px;
+            padding: 12px 15px; 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            border: 2px solid transparent; 
+            align-items: center;
+        }
+        
+        .type-pitch { 
+            background-color: var(--pitch-bg); 
+            border-color: var(--pitch-border); 
+        }
+        .type-pitch .candidate-name::after { 
+            content: "🎤 Pitching"; 
+            font-size: 0.75rem; 
+            background: var(--pitch-border); 
+            color: white; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+        
+        .type-nominee { 
+            background-color: var(--nominee-bg); 
+            border-color: var(--nominee-border); 
+            color: #555; 
+        }
+        .type-nominee .candidate-name::after { 
+            content: "📌 Nominee"; 
+            font-size: 0.75rem; 
+            background: var(--nominee-border); 
+            color: white; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+        
+        .candidate-name {
+            font-size: 1rem;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        .vote-btn { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 8px 20px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 0.95rem;
+            white-space: nowrap;
+            min-width: 80px;
+            transition: all 0.2s;
+        }
+        .vote-btn:disabled { 
+            background-color: #ccc; 
+            cursor: not-allowed; 
+            opacity: 0.6;
+        }
+        .vote-btn:hover:not(:disabled) {
+            background-color: #34495e;
+            transform: scale(1.05);
+        }
+        .vote-btn.voted {
+            background-color: var(--success);
+        }
 
-        .admin-bar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .admin-bar h3 { margin: 0; font-size: 1.1rem; }
-        .admin-buttons { display: flex; gap: 10px; }
-        .admin-buttons button { background: white; color: var(--primary); font-weight: 600; padding: 8px 16px; }
-        .admin-buttons button:hover { background: #f8f9fa; }
-        .btn-edit { color: var(--info); }
-        .btn-reset { color: var(--danger); }
+        /* Results */
+        .results-area { 
+            margin-top: 15px; 
+            padding-top: 15px; 
+            border-top: 2px dashed #ddd; 
+        }
+        .result-row { 
+            display: grid; 
+            grid-template-columns: 2fr 3fr 1fr; 
+            align-items: center; 
+            margin-bottom: 8px; 
+            font-size: 0.95rem; 
+            gap: 10px;
+        }
+        .res-name { 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            font-weight: 500;
+        }
+        .res-bar-bg { 
+            background: #eee; 
+            height: 12px; 
+            border-radius: 6px; 
+            overflow: hidden; 
+        }
+        .res-bar-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, var(--accent), #2ecc71); 
+            width: 0%; 
+            transition: width 0.5s ease; 
+            border-radius: 6px;
+        }
+        .res-count { 
+            text-align: right; 
+            font-weight: bold; 
+            color: var(--primary);
+        }
+        
+        .locked-message { 
+            text-align: center; 
+            color: #7f8c8d; 
+            font-style: italic; 
+            padding: 15px; 
+            background: #f9f9f9; 
+            border-radius: 8px; 
+            margin-top: 10px;
+        }
 
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 14px; max-width: 450px; width: 90%; text-align: center; }
+        /* Reset Button Bar */
+        .reset-bar {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .reset-bar h3 { margin: 0; font-size: 1.1rem; }
+        .reset-bar button { 
+            background: white; 
+            color: #e74c3c; 
+            font-weight: bold;
+        }
+        .reset-bar button:hover { 
+            background: #f8f9fa; 
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
         .modal-content h3 { color: var(--danger); margin-top: 0; }
-        .modal-content p { color: #555; margin: 12px 0; }
-        .modal-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 25px; }
+        .modal-content p { color: #666; margin: 15px 0; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
         .modal-buttons button { flex: 1; }
 
-        .loading-view { text-align: center; margin-top: 80px; }
-        .spinner { border: 4px solid #ecf0f1; border-top: 4px solid var(--accent); border-radius: 50%; width: 55px; height: 55px; animation: spin 1s linear infinite; margin: 0 auto 25px; }
+        /* Loading */
+        .loading-view { text-align: center; margin-top: 50px; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .toast { position: fixed; bottom: 30px; right: 30px; background: var(--success); color: white; padding: 14px 24px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.25); transform: translateY(100px); opacity: 0; transition: all 0.35s; z-index: 1001; }
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
         .toast.show { transform: translateY(0); opacity: 1; }
         .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
         .toast.info { background: var(--info); }
 
-        .setup-info { background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .setup-edit-info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; }
-        .election-info { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-size: 0.9rem; }
+        /* Setup Info Box */
+        .setup-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .setup-edit-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .election-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- SETUP PAGE -->
+    <!-- VIEW 1: SETUP PAGE -->
     <div id="setup-view" class="hidden">
         <div class="setup-box">
             <h2>🛠️ Election Setup</h2>
-            <div id="setup-edit-info" class="setup-edit-info hidden">✏️ <strong>Edit Mode:</strong> Modify candidates. <strong>Votes will be preserved.</strong></div>
-            <div id="setup-info" class="setup-info hidden">⚠️ Existing candidates loaded. Re-saving will <strong>reset all votes</strong>.</div>
-            <p style="text-align: center; color: #666; margin-bottom: 20px;">Configure positions and candidates.</p>
+            
+            <div id="setup-edit-info" class="setup-edit-info hidden">
+                ✏️ <strong>Edit Mode:</strong> Modify candidates. <strong>Votes will be preserved.</strong>
+            </div>
+            
+            <div id="setup-info" class="setup-info hidden">
+                ⚠️ Existing candidates loaded. Re-saving will <strong>reset all votes</strong>.
+            </div>
+            
+            <p style="text-align: center; color: #666;">Configure positions and candidates.</p>
+            
             <div class="form-group">
                 <label>🔐 Admin Password (Default: admin123)</label>
                 <input type="password" id="setup-password" placeholder="Enter admin password">
             </div>
+
             <div id="positions-form-container"></div>
+            
             <button class="add-position-btn" onclick="addPositionField()">➕ Add New Position</button>
+            
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button id="save-btn" onclick="saveElectionConfig()" style="flex: 2;">🚀 Start Election</button>
                 <button class="secondary" onclick="resetAllFields()" style="flex: 1;">🔄 Clear Form</button>
@@ -128,25 +399,28 @@
         </div>
     </div>
 
-    <!-- VOTING PAGE -->
+    <!-- VIEW 2: VOTING PAGE -->
     <div id="voting-view" class="hidden">
         <header style="text-align: center; margin-bottom: 20px;">
             <h1>🗳️ NGO Annual Election</h1>
-            <p style="color: #666;">Select your candidate for each position. Results appear immediately.</p>
+            <p style="color: #666;">Select your candidate for each position. Results appear immediately after voting.</p>
         </header>
+
         <div id="election-info" class="election-info hidden">
-            📋 Election ID: <strong id="election-id-display">-</strong>
+            📋 Election ID: <strong id="election-id-display">-</strong> | 
+            Started: <strong id="election-date-display">-</strong>
         </div>
-        <div class="admin-bar hidden" id="admin-bar">
-            <h3>👑 Admin Panel</h3>
-            <div class="admin-buttons">
-                <button class="btn-edit" onclick="editCandidates()">✏️ Edit Candidates</button>
-                <button class="btn-reset" onclick="showResetModal()">🗑️ Reset Election</button>
-            </div>
+
+        <div class="reset-bar">
+            <h3>⚠️ Admin Only</h3>
+            <button onclick="showEditCandidates()">✏️ Edit Candidates</button>
+            <button onclick="showResetConfirmation()">🗑️ Reset Election</button>
         </div>
+
         <div id="positions-grid" class="positions-grid"></div>
+        
         <div style="text-align: center; margin-top: 30px; color: #999;">
-            <p>🔒 Anonymous voting. One vote per position per device.</p>
+            <p>🔒 Your vote is anonymous. Each position can only be voted once per election.</p>
         </div>
     </div>
 
@@ -154,27 +428,28 @@
     <div id="loading-view" class="loading-view">
         <div class="spinner"></div>
         <h2>Loading Election System...</h2>
+        <p style="color: #666;">Connecting to database</p>
     </div>
 </div>
 
-<!-- Reset Modal -->
+<!-- Reset Confirmation Modal -->
 <div id="reset-modal" class="modal-overlay hidden">
     <div class="modal-content">
         <h3>⚠️ Reset Election?</h3>
-        <p><strong>This will DELETE ALL votes and candidates.</strong></p>
-        <p style="color: var(--danger);">⚠️ This action CANNOT be undone!</p>
+        <p>This will <strong>DELETE ALL</strong> votes and candidates, and return to Setup page.</p>
+        <p style="color: var(--danger); font-size: 0.9rem;">⚠️ This action CANNOT be undone!</p>
         <div class="form-group">
-            <label>Enter Admin Password:</label>
-            <input type="password" id="reset-password" placeholder="Admin password" onkeypress="if(event.key==='Enter')confirmReset()">
+            <label>Enter Admin Password to Confirm:</label>
+            <input type="password" id="reset-password" placeholder="Admin password" onkeypress="if(event.key==='Enter')confirmResetElection()">
         </div>
         <div class="modal-buttons">
             <button class="secondary" onclick="hideResetModal()">Cancel</button>
-            <button class="danger" onclick="confirmReset()">🗑️ Reset</button>
+            <button class="danger" onclick="confirmResetElection()">🗑️ Yes, Reset Everything</button>
         </div>
     </div>
 </div>
 
-<!-- Toast -->
+<!-- Toast Notification -->
 <div id="toast" class="toast"></div>
 
 <!-- Firebase SDKs -->
@@ -182,6 +457,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
     import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, getDocs, updateDoc, increment, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
+    // Firebase Configuration
     const firebaseConfig = {
         apiKey: "AIzaSyAXUttZVQ3u3N-1UJW7uF9h6j6TW0HGcKQ",
         authDomain: "balsa-election.firebaseapp.com",
@@ -192,15 +468,26 @@
         measurementId: "G-EC7QSC9BMV"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const ADMIN_PASSWORD = "admin123";
-    let localVotes = {};
-    let existingCandidates = [];
-    let isEditMode = false;
-    let currentElectionId = null;
+    // Constants
+    const DEFAULT_POSITIONS = [
+        "President", "Co-President", "VP-EO", "VP-IO", "DoHR", 
+        "DoM", "DoO", "DoPD", "DoF", "DoDEI"
+    ];
+    const SETUP_PASSWORD = "admin123";
 
+    // State
+    let localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
+    let currentPositionData = {};
+    let voteInProgress = false;
+    let existingCandidates = [];
+    let currentElectionId = null;
+    let isEditMode = false;
+
+    // DOM Elements
     const setupView = document.getElementById('setup-view');
     const votingView = document.getElementById('voting-view');
     const loadingView = document.getElementById('loading-view');
@@ -211,126 +498,168 @@
     const setupInfo = document.getElementById('setup-info');
     const setupEditInfo = document.getElementById('setup-edit-info');
     const electionInfo = document.getElementById('election-info');
-    const adminBar = document.getElementById('admin-bar');
-    const saveBtn = document.getElementById('save-btn');
     const electionIdDisplay = document.getElementById('election-id-display');
+    const electionDateDisplay = document.getElementById('election-date-display');
+    const saveBtn = document.getElementById('save-btn');
 
-    function showToast(msg, type = 'success') {
-        toast.textContent = msg;
-        toast.className = `toast show ${type}`;
-        setTimeout(() => toast.className = 'toast', 3000);
+    // Show toast notification
+    function showToast(message, type = 'success') {
+        toast.textContent = message;
+        toast.className = 'toast show ' + type;
+        setTimeout(() => {
+            toast.className = 'toast';
+        }, 3000);
     }
 
+    // Generate unique election ID
+    function generateElectionId() {
+        return 'ELECT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+    }
+
+    // Escape HTML
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
-    // --- INIT ---
+    // --- INITIALIZATION ---
     async function init() {
         try {
             const configDoc = await getDoc(doc(db, "system", "config"));
             if (configDoc.exists()) {
-                showVotingPage(configDoc.data());
+                const configData = configDoc.data();
+                currentElectionId = configData.electionId || null;
+                showVotingPage(configData);
             } else {
-                showSetupPage(false);
+                showSetupPage();
             }
-        } catch (e) {
-            console.error(e);
-            showToast("Connection error", 'error');
+        } catch (error) {
+            console.error("Error checking config:", error);
+            showToast("Database connection error. Please check Firebase configuration.", 'error');
             loadingView.classList.add('hidden');
         }
     }
 
-    // --- SETUP PAGE ---
-    async function showSetupPage(editMode = false) {
+    // --- SETUP PAGE LOGIC ---
+    async function showSetupPage() {
         loadingView.classList.add('hidden');
         setupView.classList.remove('hidden');
         votingView.classList.add('hidden');
-        adminBar.classList.add('hidden');
         
-        isEditMode = editMode;
         positionsFormContainer.innerHTML = '';
         existingCandidates = [];
         
-        if (editMode) {
-            setupEditInfo.classList.remove('hidden');
-            setupInfo.classList.add('hidden');
-            saveBtn.textContent = "💾 Save Changes (Keep Votes)";
-            saveBtn.className = 'info';
-        } else {
-            setupEditInfo.classList.add('hidden');
-            setupInfo.classList.add('hidden');
-            saveBtn.textContent = "🚀 Start Election";
-            saveBtn.className = '';
-        }
-
         try {
-            const snapshot = await getDocs(collection(db, "candidates"));
+            const q = query(collection(db, "candidates"));
+            const snapshot = await getDocs(q);
+            
             if (!snapshot.empty) {
-                snapshot.forEach(d => existingCandidates.push({ id: d.id, ...d.data() }));
-                
-                const byPos = {};
-                existingCandidates.forEach(c => {
-                    if (!byPos[c.position]) byPos[c.position] = [];
-                    byPos[c.position].push(c);
+                snapshot.forEach(docSnapshot => {
+                    existingCandidates.push({
+                        id: docSnapshot.id,
+                        ...docSnapshot.data()
+                    });
                 });
                 
-                Object.keys(byPos).forEach(pos => addPositionField(pos, byPos[pos]));
+                const candidatesByPos = {};
+                existingCandidates.forEach(c => {
+                    if (!candidatesByPos[c.position]) {
+                        candidatesByPos[c.position] = [];
+                    }
+                    candidatesByPos[c.position].push(c);
+                });
                 
-                showToast(editMode ? "✏️ Edit Mode: Votes preserved" : "📝 Candidates loaded", editMode ? 'info' : 'success');
+                Object.keys(candidatesByPos).forEach(pos => {
+                    addPositionField(pos, candidatesByPos[pos]);
+                });
+                
+                if (isEditMode) {
+                    setupEditInfo.classList.remove('hidden');
+                    setupInfo.classList.add('hidden');
+                    saveBtn.textContent = "💾 Save Changes (Keep Votes)";
+                    saveBtn.className = 'info';
+                    showToast("✏️ Edit Mode: Votes will be preserved", 'info');
+                } else {
+                    setupEditInfo.classList.add('hidden');
+                    setupInfo.classList.remove('hidden');
+                    saveBtn.textContent = "🚀 Start / Restart Election";
+                    saveBtn.className = '';
+                    showToast("📝 Existing candidates loaded");
+                }
             } else {
-                ["President", "Co-President", "VP-EO", "VP-IO", "DoHR", "DoM", "DoO", "DoPD", "DoF", "DoDEI"].forEach(p => addPositionField(p));
+                DEFAULT_POSITIONS.forEach(pos => {
+                    addPositionField(pos);
+                });
+                setupEditInfo.classList.add('hidden');
+                setupInfo.classList.add('hidden');
+                saveBtn.textContent = "🚀 Start Election";
+                saveBtn.className = '';
             }
         } catch (e) {
-            console.error(e);
-            ["President", "Co-President", "VP-EO", "VP-IO", "DoHR", "DoM", "DoO", "DoPD", "DoF", "DoDEI"].forEach(p => addPositionField(p));
+            console.error("Error loading existing candidates:", e);
+            DEFAULT_POSITIONS.forEach(pos => {
+                addPositionField(pos);
+            });
         }
     }
 
-    window.addPositionField = (name = '', candidates = []) => {
+    // Add a position field
+    window.addPositionField = (defaultName = '', candidates = []) => {
         const div = document.createElement('div');
         div.className = 'position-setup-item';
+        
+        const positionName = defaultName || `New Position ${document.querySelectorAll('.position-setup-item').length + 1}`;
+        
         div.innerHTML = `
             <div class="position-header">
-                <input type="text" class="position-title-input" value="${name || `Position ${document.querySelectorAll('.position-setup-item').length + 1}`}" placeholder="Position Name">
-                <button class="remove-position-btn" onclick="this.closest('.position-setup-item').remove()">🗑️</button>
+                <input type="text" class="position-title-input" value="${positionName}" placeholder="Position Name">
+                <button class="remove-position-btn" onclick="removePositionField(this)">🗑️ Remove Position</button>
             </div>
             <div class="candidates-container"></div>
-            <button class="secondary" onclick="addCandidateRow(this)" style="width:auto;font-size:0.85rem">➕ Candidate</button>
+            <button class="secondary" onclick="addCandidateField(this)" style="width:auto; font-size:0.85rem">➕ Add Candidate</button>
         `;
         positionsFormContainer.appendChild(div);
         
-        const container = div.querySelector('.candidates-container');
+        const candidatesContainer = div.querySelector('.candidates-container');
+        
         if (candidates.length > 0) {
             candidates.forEach(c => {
                 const row = document.createElement('div');
                 row.className = 'candidate-row';
                 row.innerHTML = `
-                    <input type="text" class="cand-name" value="${escapeHtml(c.name || '')}" placeholder="Name">
+                    <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}">
                     <select class="cand-type">
-                        <option value="pitch" ${c.type === 'pitch' ? 'selected' : ''}>🎤 Pitching</option>
-                        <option value="nominee" ${c.type === 'nominee' ? 'selected' : ''}>📌 Nominee</option>
+                        <option value="pitch" ${c.type === 'pitch' ? 'selected' : ''}>🎤 Pitching (Green)</option>
+                        <option value="nominee" ${c.type === 'nominee' ? 'selected' : ''}>📌 Nominee (Gray)</option>
                     </select>
                     <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>
                 `;
-                container.appendChild(row);
+                candidatesContainer.appendChild(row);
             });
         } else {
-            addCandidateRow(div.querySelector('.secondary'));
+            addCandidateField(div.querySelector('.secondary'));
         }
     };
 
-    window.addCandidateRow = (btn) => {
+    window.removePositionField = (btn) => {
+        const positionCount = document.querySelectorAll('.position-setup-item').length;
+        if (positionCount <= 1) {
+            showToast("You need at least 1 position!", 'error');
+            return;
+        }
+        btn.closest('.position-setup-item').remove();
+    };
+
+    window.addCandidateField = (btn) => {
         const container = btn.parentElement.querySelector('.candidates-container');
         const row = document.createElement('div');
         row.className = 'candidate-row';
         row.innerHTML = `
-            <input type="text" class="cand-name" placeholder="Candidate Name">
+            <input type="text" placeholder="Candidate Name" class="cand-name">
             <select class="cand-type">
-                <option value="pitch">🎤 Pitching</option>
-                <option value="nominee">📌 Nominee</option>
+                <option value="pitch">🎤 Pitching (Green)</option>
+                <option value="nominee">📌 Nominee (Gray)</option>
             </select>
             <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>
         `;
@@ -338,237 +667,349 @@
     };
 
     window.resetAllFields = () => {
-        if (confirm("Clear all fields?")) {
+        if (confirm("Reset all form fields?")) {
             positionsFormContainer.innerHTML = '';
-            ["President", "Co-President", "VP-EO", "VP-IO", "DoHR", "DoM", "DoO", "DoPD", "DoF", "DoDEI"].forEach(p => addPositionField(p));
+            DEFAULT_POSITIONS.forEach(pos => addPositionField(pos));
             setupInfo.classList.add('hidden');
             setupEditInfo.classList.add('hidden');
+            showToast("Form reset successfully!");
         }
     };
 
     // --- SAVE CONFIG (关键修复) ---
     window.saveElectionConfig = async () => {
-        const pwd = document.getElementById('setup-password').value;
-        if (pwd !== ADMIN_PASSWORD) { showToast("Wrong password", 'error'); return; }
+        const password = document.getElementById('setup-password').value;
+        if (password !== SETUP_PASSWORD) {
+            showToast("Incorrect Setup Password!", 'error');
+            return;
+        }
 
-        const items = document.querySelectorAll('.position-setup-item');
-        if (items.length === 0) { showToast("Add at least 1 position", 'error'); return; }
+        const candidatesData = [];
+        const positionItems = document.querySelectorAll('.position-setup-item');
+        
+        if (positionItems.length === 0) {
+            showToast("Please add at least one position!", 'error');
+            return;
+        }
 
-        const candidates = [];
-        items.forEach(item => {
-            const pos = item.querySelector('.position-title-input').value.trim();
-            if (!pos) return;
-            item.querySelectorAll('.candidate-row').forEach(row => {
+        let hasError = false;
+        positionItems.forEach(item => {
+            const positionName = item.querySelector('.position-title-input').value.trim();
+            if (!positionName) {
+                showToast("Please fill in all position names!", 'error');
+                hasError = true;
+                return;
+            }
+            
+            const rows = item.querySelectorAll('.candidate-row');
+            rows.forEach(row => {
                 const name = row.querySelector('.cand-name').value.trim();
                 const type = row.querySelector('.cand-type').value;
-                if (name) candidates.push({ position: pos, name, type, votes: 0 });
+                if (name) {
+                    candidatesData.push({ position: positionName, name: name, type: type, votes: 0 });
+                }
             });
         });
 
-        if (candidates.length === 0) { showToast("Add at least 1 candidate", 'error'); return; }
+        if (hasError) return;
+
+        if (candidatesData.length === 0) {
+            showToast("Please add at least one candidate!", 'error');
+            return;
+        }
 
         try {
-            showToast("Saving...");
+            // 🔥 关键修复：先读取当前 config，保留 electionId
+            const configDoc = await getDoc(doc(db, "system", "config"));
+            const currentConfig = configDoc.data() || {};
+            const existingElectionId = currentConfig.electionId;
 
-            // Delete old candidates
+            // 删除旧候选人
             if (existingCandidates.length > 0) {
                 const batch = writeBatch(db);
-                existingCandidates.forEach(c => batch.delete(doc(db, "candidates", c.id)));
+                existingCandidates.forEach(c => {
+                    batch.delete(doc(db, "candidates", c.id));
+                });
                 await batch.commit();
             }
 
-            // 🔥 关键修复：读取当前 electionId
-            const configDoc = await getDoc(doc(db, "system", "config"));
-            const currentConfig = configDoc.data();
-            const electionId = currentConfig?.electionId || 'ELECT-' + Date.now().toString(36).toUpperCase();
-
             if (isEditMode) {
-                // ✅ 编辑模式：保留 electionId，不清除 localStorage
+                // ✅ 编辑模式：保留 electionId，不清除投票记录
                 await setDoc(doc(db, "system", "config"), {
-                    ...currentConfig,  // 保留所有现有字段
+                    ...currentConfig,  // 保留所有现有字段（包括 electionId）
                     lastEdited: new Date()
                 });
                 showToast("💾 Changes saved! Votes preserved.", 'info');
+                // 🔥 关键：不清除 localStorage
             } else {
-                // ✅ 新选举：生成新 ID，清除投票
-                const newId = 'ELECT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
-                await setDoc(doc(db, "system", "config"), {
-                    status: "active",
-                    electionId: newId,
-                    createdAt: new Date()
+                // ✅ 新选举模式：生成新 electionId，清除投票记录
+                const newElectionId = generateElectionId();
+                
+                await setDoc(doc(db, "system", "config"), { 
+                    status: "active", 
+                    createdAt: new Date(),
+                    electionId: newElectionId
                 });
-                localStorage.removeItem('ngo_votes');
-                localStorage.setItem('ngo_election_id', newId);
-                showToast("✅ New election started!", 'success');
+                
+                // 清除本地投票记录
+                localStorage.removeItem('ngo_voted_positions');
+                localStorage.setItem('ngo_election_id', newElectionId);
+                currentElectionId = newElectionId;
+                localVotes = {};
+                
+                showToast("✅ New election started!");
             }
 
-            await Promise.all(candidates.map(c => addDoc(collection(db, "candidates"), c)));
+            // 保存新候选人
+            const batchPromises = candidatesData.map(data => 
+                addDoc(collection(db, "candidates"), data)
+            );
+            await Promise.all(batchPromises);
 
+            // 重置编辑模式
             isEditMode = false;
-            setTimeout(() => location.reload(), 1200);
-
+            setTimeout(() => location.reload(), 1500);
+            
         } catch (e) {
             console.error(e);
             showToast("Error: " + e.message, 'error');
         }
     };
 
-    // --- VOTING PAGE (关键修复) ---
-    function showVotingPage(config) {
+    // --- VOTING PAGE LOGIC (关键修复) ---
+    function showVotingPage(configData) {
         loadingView.classList.add('hidden');
         votingView.classList.remove('hidden');
         setupView.classList.add('hidden');
-        adminBar.classList.remove('hidden');
         
-        const serverElectionId = config.electionId;
-        
-        // 🔥 关键：如果没有 electionId，使用 config 文档 ID 作为备选
-        if (!serverElectionId) {
-            console.warn("No electionId in config, using fallback");
+        // 显示选举信息
+        currentElectionId = configData.electionId || 'UNKNOWN';
+        electionIdDisplay.textContent = currentElectionId;
+        if (configData.createdAt) {
+            const date = configData.createdAt.toDate ? configData.createdAt.toDate() : new Date(configData.createdAt);
+            electionDateDisplay.textContent = date.toLocaleString();
         }
-        
-        electionIdDisplay.textContent = serverElectionId || 'N/A';
         electionInfo.classList.remove('hidden');
         
-        // 🔥 关键修复：只在 electionId 确实变化时才清除投票
-        const storedId = localStorage.getItem('ngo_election_id');
-        const storedVotes = localStorage.getItem('ngo_votes');
+        // 🔥 关键修复：只有 electionId 确实变化时才清除投票记录
+        const storedElectionId = localStorage.getItem('ngo_election_id');
+        const storedVotes = localStorage.getItem('ngo_voted_positions');
         
-        console.log("Stored ID:", storedId);
-        console.log("Server ID:", serverElectionId);
+        console.log("=== Election ID Check ===");
+        console.log("Stored ID:", storedElectionId);
+        console.log("Server ID:", currentElectionId);
         console.log("Stored Votes:", storedVotes);
         
-        if (storedId && serverElectionId && storedId !== serverElectionId) {
-            // 确实是大选举，清除
+        if (storedElectionId && currentElectionId && storedElectionId !== currentElectionId) {
+            // 确实是大选举，清除旧记录
             console.log("New election detected, clearing votes");
-            localStorage.removeItem('ngo_votes');
-            localStorage.setItem('ngo_election_id', serverElectionId);
+            localStorage.removeItem('ngo_voted_positions');
+            localStorage.setItem('ngo_election_id', currentElectionId);
             localVotes = {};
         } else {
-            // 同一选举或首次访问，保留投票 🔥
+            // 同一选举（包括编辑模式）或首次访问，保留投票记录 🔥
             localVotes = JSON.parse(storedVotes || '{}');
-            if (!storedId && serverElectionId) {
-                localStorage.setItem('ngo_election_id', serverElectionId);
+            if (!storedElectionId && currentElectionId) {
+                localStorage.setItem('ngo_election_id', currentElectionId);
             }
+            console.log("Same election, keeping votes");
         }
         
-        currentElectionId = serverElectionId;
-        loadCandidates();
+        loadPositionsRealtime();
     }
 
-    function loadCandidates() {
-        onSnapshot(collection(db, "candidates"), (snapshot) => {
-            const byPos = {};
-            snapshot.forEach(d => {
-                const data = d.data();
-                if (!byPos[data.position]) byPos[data.position] = [];
-                byPos[data.position].push({ id: d.id, ...data });
+    function loadPositionsRealtime() {
+        const q = query(collection(db, "candidates"));
+        
+        onSnapshot(q, (snapshot) => {
+            const candidatesByPos = {};
+            currentPositionData = {};
+            
+            snapshot.forEach(docSnapshot => {
+                const data = docSnapshot.data();
+                const positionName = data.position.trim();
+                
+                if (!candidatesByPos[positionName]) {
+                    candidatesByPos[positionName] = [];
+                }
+                candidatesByPos[positionName].push({ id: docSnapshot.id, ...data });
+                
+                if (!currentPositionData[positionName]) {
+                    currentPositionData[positionName] = new Set();
+                }
+                currentPositionData[positionName].add(docSnapshot.id);
             });
-            renderGrid(byPos);
+
+            renderVotingGrid(candidatesByPos);
         });
     }
 
-    function renderGrid(byPos) {
+    function renderVotingGrid(candidatesByPos) {
         positionsGrid.innerHTML = '';
-        const positions = Object.keys(byPos).sort();
-
+        
+        const positions = Object.keys(candidatesByPos).sort();
+        
         if (positions.length === 0) {
-            positionsGrid.innerHTML = '<p style="text-align:center;color:#666;">No candidates</p>';
+            positionsGrid.innerHTML = '<p style="text-align:center;color:#666;">No positions configured.</p>';
             return;
         }
-
+        
         positions.forEach(pos => {
+            const candidates = candidatesByPos[pos];
+            const hasVoted = localVotes[pos] === true;
+            
             const card = document.createElement('div');
             card.className = 'position-card';
             
-            const voted = localVotes[pos] === true;
-            let html = `<div class="position-title">${escapeHtml(pos)}</div>`;
-            
+            let candidatesHTML = '';
+            let resultsHTML = '';
             let totalVotes = 0;
-            byPos[pos].forEach(c => totalVotes += (c.votes || 0));
 
-            byPos[pos].forEach(c => {
-                const cls = c.type === 'pitch' ? 'type-pitch' : 'type-nominee';
-                const safeName = escapeHtml(c.name);
-                const safePos = encodeURIComponent(pos);
-                const safeId = encodeURIComponent(c.id);
+            candidates.forEach(c => totalVotes += (c.votes || 0));
+
+            candidates.forEach(c => {
+                const typeClass = c.type === 'pitch' ? 'type-pitch' : 'type-nominee';
+                const btnDisabled = hasVoted ? 'disabled' : '';
+                const btnText = hasVoted ? '✓ Voted' : 'Vote';
+                const btnClass = hasVoted ? 'voted' : '';
                 
-                html += `
-                    <div class="candidate-item ${cls}">
+                const safePosition = encodeURIComponent(pos);
+                const safeCandidateId = encodeURIComponent(c.id);
+                const safeName = escapeHtml(c.name);
+                
+                candidatesHTML += `
+                    <div class="candidate-item ${typeClass}">
                         <span class="candidate-name">${safeName}</span>
-                        <button class="vote-btn ${voted ? 'voted' : ''}" 
-                                onclick="window.castVote('${safePos}','${safeId}')" 
-                                ${voted ? 'disabled' : ''}>
-                            ${voted ? '✓ Voted' : 'Vote'}
+                        <button class="vote-btn ${btnClass}" 
+                                onclick="window.castVote(decodeURIComponent('${safePosition}'), decodeURIComponent('${safeCandidateId}'))" 
+                                ${btnDisabled}>
+                            ${btnText}
                         </button>
                     </div>
-                    <div class="results-area">
-                        <div class="result-row">
-                            <div class="res-name">${safeName}</div>
-                            <div class="res-bar-bg"><div class="res-bar-fill" style="width:${totalVotes ? Math.round((c.votes / totalVotes) * 100) : 0}%"></div></div>
-                            <div class="res-count">${c.votes || 0}</div>
+                `;
+
+                const percentage = totalVotes === 0 ? 0 : Math.round((c.votes / totalVotes) * 100);
+                resultsHTML += `
+                    <div class="result-row">
+                        <div class="res-name" title="${safeName}">${safeName}</div>
+                        <div class="res-bar-bg">
+                            <div class="res-bar-fill" style="width: ${percentage}%"></div>
                         </div>
+                        <div class="res-count">${c.votes || 0}</div>
                     </div>
                 `;
             });
 
-            if (!voted) html += '<div class="locked-message">🔒 Vote to see results</div>';
+            const resultsSection = hasVoted 
+                ? `<div class="results-area">${resultsHTML}</div>` 
+                : `<div class="locked-message">🔒 Vote to see results</div>`;
 
-            card.innerHTML = html;
+            card.innerHTML = `
+                <div class="position-title">${escapeHtml(pos)}</div>
+                ${candidatesHTML}
+                ${resultsSection}
+            `;
             positionsGrid.appendChild(card);
         });
     }
 
-    window.castVote = async (pos, id) => {
-        const position = decodeURIComponent(pos);
-        const candidateId = decodeURIComponent(id);
+    // --- CAST VOTE ---
+    window.castVote = async (position, candidateId) => {
+        if (voteInProgress) {
+            showToast("Please wait...", 'warning');
+            return;
+        }
         
-        if (localVotes[position]) { showToast("Already voted", 'error'); return; }
-        if (!confirm(`Vote for ${position}?`)) return;
+        const normalizedPosition = position.trim();
+        
+        if (localVotes[normalizedPosition] === true) {
+            showToast("You already voted for this position!", 'error');
+            return;
+        }
+
+        if (!confirm(`Confirm your vote for ${position}?`)) {
+            return;
+        }
+
+        voteInProgress = true;
 
         try {
-            await updateDoc(doc(db, "candidates", candidateId), { votes: increment(1) });
-            localVotes[position] = true;
-            localStorage.setItem('ngo_votes', JSON.stringify(localVotes));
-            showToast("✅ Voted!");
-            loadCandidates();
+            const candidateRef = doc(db, "candidates", candidateId);
+            await updateDoc(candidateRef, {
+                votes: increment(1)
+            });
+
+            localVotes[normalizedPosition] = true;
+            localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
+            
+            showToast("✅ Vote submitted!");
+            loadPositionsRealtime();
+            
         } catch (e) {
+            console.error("Voting error:", e);
+            showToast("Failed: " + e.message, 'error');
+        } finally {
+            voteInProgress = false;
+        }
+    };
+
+    // --- ADMIN: EDIT CANDIDATES (不重置投票) ---
+    window.showEditCandidates = () => {
+        isEditMode = true;
+        showSetupPage();
+    };
+
+    // --- ADMIN: RESET ELECTION (重置所有) ---
+    window.showResetConfirmation = () => {
+        resetModal.classList.remove('hidden');
+        document.getElementById('reset-password').value = '';
+        document.getElementById('reset-password').focus();
+    };
+
+    window.hideResetModal = () => {
+        resetModal.classList.add('hidden');
+    };
+
+    window.confirmResetElection = async () => {
+        const password = document.getElementById('reset-password').value;
+        if (password !== SETUP_PASSWORD) {
+            showToast("Incorrect Admin Password!", 'error');
+            return;
+        }
+
+        try {
+            showToast("Resetting...", 'warning');
+            
+            const q = query(collection(db, "candidates"));
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.size > 0) {
+                const batch = writeBatch(db);
+                snapshot.forEach(docSnapshot => {
+                    batch.delete(docSnapshot.ref);
+                });
+                await batch.commit();
+            }
+            
+            await deleteDoc(doc(db, "system", "config"));
+            
+            localStorage.removeItem('ngo_voted_positions');
+            localStorage.removeItem('ngo_election_id');
+            
+            showToast("✅ Reset successfully! Returning to Setup...");
+            hideResetModal();
+            
+            setTimeout(() => location.reload(), 1500);
+            
+        } catch (e) {
+            console.error("Reset error:", e);
             showToast("Failed: " + e.message, 'error');
         }
     };
 
-    window.editCandidates = () => { isEditMode = true; showSetupPage(true); };
-    
-    window.showResetModal = () => {
-        resetModal.classList.remove('hidden');
-        document.getElementById('reset-password').value = '';
-    };
-    window.hideResetModal = () => resetModal.classList.add('hidden');
-
-    window.confirmReset = async () => {
-        const pwd = document.getElementById('reset-password').value;
-        if (pwd !== ADMIN_PASSWORD) { showToast("Wrong password", 'error'); return; }
-
-        try {
-            showToast("Resetting...");
-            const snapshot = await getDocs(collection(db, "candidates"));
-            if (!snapshot.empty) {
-                const batch = writeBatch(db);
-                snapshot.forEach(d => batch.delete(d.ref));
-                await batch.commit();
-            }
-            await deleteDoc(doc(db, "system", "config"));
-            localStorage.removeItem('ngo_votes');
-            localStorage.removeItem('ngo_election_id');
-            showToast("✅ Reset complete!");
-            hideResetModal();
-            setTimeout(() => location.reload(), 1200);
-        } catch (e) {
-            showToast("Error: " + e.message, 'error');
-        }
-    };
-
+    // Start App
     init();
+
 </script>
 </body>
 </html>

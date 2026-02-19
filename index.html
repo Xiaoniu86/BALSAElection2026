@@ -592,8 +592,9 @@
             candidates.forEach(c => {
                 const row = document.createElement('div');
                 row.className = 'candidate-row';
+                // 🔧 修复：添加 data-doc-id 属性，用于编辑时直接定位文档
                 row.innerHTML = `
-                    <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}">
+                    <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}" data-doc-id="${c.id}">
                     <select class="cand-type">
                         <option value="pitch" ${c.type === 'pitch' ? 'selected' : ''}>🎤 Pitching (Green)</option>
                         <option value="nominee" ${c.type === 'nominee' ? 'selected' : ''}>📌 Nominee (Gray)</option>
@@ -669,23 +670,18 @@
             const candidateRows = item.querySelectorAll('.candidate-row');
             for (const row of candidateRows) {
                 const nameInput = row.querySelector('.cand-name');
+                const docId = nameInput?.dataset.docId;  // 🔧 修复：直接从 data-doc-id 获取
+                if (!docId) continue;  // 新添加的候选人没有 docId，跳过
                 const name = nameInput.value.trim();
                 const type = row.querySelector('.cand-type').value;
                 if (name) {
                     // 🔐 关键：只更新 name/type/position，votes 字段完全隔离
-                    // 通过 candidate name 匹配找到对应 doc（简化版，实际生产建议用 data-doc-id）
-                    const q = query(collection(db, "candidates"), 
-                        where("position", "==", positionName),
-                        where("name", "==", nameInput.dataset.originalName || name)
-                    );
-                    const snap = await getDocs(q);
-                    if (!snap.empty) {
-                        await updateDoc(snap.docs[0].ref, {
-                            position: positionName,
-                            name: name,
-                            type: type
-                        });
-                    }
+                    // 🔧 修复：直接用 docId 更新，无需 where 查询
+                    await updateDoc(doc(db, "candidates", docId), {
+                        position: positionName,
+                        name: name,
+                        type: type
+                    });
                 }
             }
         }

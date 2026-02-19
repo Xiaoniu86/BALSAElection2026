@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO Election Voting System</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --pitch-bg: #e8f8f0;
+            --pitch-border: #27ae60;
+            --nominee-bg: #f9f9f9;
+            --nominee-border: #bdc3c7;
+            --text-main: #333;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --info: #17a2b8;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; color: var(--text-main); margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1, h2 { text-align: center; color: var(--primary); }
+        .hidden { display: none !important; }
+        
+        /* Setup Page Styles */
+        .setup-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 800px; margin: 50px auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 1rem; transition: all 0.2s; }
+        button:hover { background: #34495e; transform: scale(1.02); }
+        button.secondary { background: #95a5a6; margin-top: 10px; }
+        button.danger { background: var(--danger); }
+        button.danger:hover { background: #c0392b; }
+        button.success { background: var(--success); }
+        button.success:hover { background: #1e8449; }
+        button.warning { background: var(--warning); }
+        button.warning:hover { background: #d68910; }
+        button.info { background: var(--info); }
+        button.info:hover { background: #138496; }
+        
+        .position-setup-item { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            border-radius: 8px; 
+            padding: 15px; 
+            margin-bottom: 20px;
+        }
+        .position-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .position-title-input {
+            flex: 1;
+            min-width: 200px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .remove-position-btn { 
+            background: var(--danger); 
+            padding: 5px 15px; 
+            font-size: 0.9rem;
+        }
+        
+        .candidate-row { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 10px; 
+            align-items: center; 
+            flex-wrap: wrap;
+        }
+        .candidate-row input { flex: 2; min-width: 150px; }
+        .candidate-row select { flex: 1; min-width: 120px; }
+        .remove-btn { background: var(--danger); width: auto; padding: 8px 15px; }
+
+        .add-position-btn {
+            width: 100%;
+            margin: 15px 0;
+            background: var(--accent);
+        }
+        .add-position-btn:hover { background: #2980b9; }
+
+        /* Voting Page Styles */
+        .positions-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 25px; 
+            margin-top: 30px; 
+        }
+        
+        @media (min-width: 768px) {
+            .positions-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .positions-grid { 
+                grid-template-columns: repeat(3, 1fr); 
+            }
+        }
+
+        .position-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+        }
+        
+        .position-title { 
+            font-size: 1.3rem; 
+            font-weight: bold; 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--accent); 
+            padding-bottom: 12px; 
+            margin-bottom: 15px; 
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .candidate-item { 
+            display: grid; 
+            grid-template-columns: 1fr auto; 
+            gap: 15px;
+            padding: 12px 15px; 
+            margin-bottom: 10px; 
+            border-radius: 8px; 
+            border: 2px solid transparent; 
+            align-items: center;
+        }
+        
+        .type-pitch { 
+            background-color: var(--pitch-bg); 
+            border-color: var(--pitch-border); 
+        }
+        .type-pitch .candidate-name::after { 
+            content: "🎤 Pitching"; 
+            font-size: 0.75rem; 
+            background: var(--pitch-border); 
+            color: white; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+        
+        .type-nominee { 
+            background-color: var(--nominee-bg); 
+            border-color: var(--nominee-border); 
+            color: #555; 
+        }
+        .type-nominee .candidate-name::after { 
+            content: "📌 Nominee"; 
+            font-size: 0.75rem; 
+            background: var(--nominee-border); 
+            color: white; 
+            padding: 3px 8px; 
+            border-radius: 4px; 
+            margin-left: 12px;
+            vertical-align: middle;
+        }
+        
+        .candidate-name {
+            font-size: 1rem;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        .vote-btn { 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            padding: 8px 20px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-size: 0.95rem;
+            white-space: nowrap;
+            min-width: 80px;
+            transition: all 0.2s;
+        }
+        .vote-btn:disabled { 
+            background-color: #ccc; 
+            cursor: not-allowed; 
+            opacity: 0.6;
+        }
+        .vote-btn:hover:not(:disabled) {
+            background-color: #34495e;
+            transform: scale(1.05);
+        }
+        .vote-btn.voted {
+            background-color: var(--success);
+        }
+
+        /* Results */
+        .results-area { 
+            margin-top: 15px; 
+            padding-top: 15px; 
+            border-top: 2px dashed #ddd; 
+        }
+        .result-row { 
+            display: grid; 
+            grid-template-columns: 2fr 3fr 1fr; 
+            align-items: center; 
+            margin-bottom: 8px; 
+            font-size: 0.95rem; 
+            gap: 10px;
+        }
+        .res-name { 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            font-weight: 500;
+        }
+        .res-bar-bg { 
+            background: #eee; 
+            height: 12px; 
+            border-radius: 6px; 
+            overflow: hidden; 
+        }
+        .res-bar-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, var(--accent), #2ecc71); 
+            width: 0%; 
+            transition: width 0.5s ease; 
+            border-radius: 6px;
+        }
+        .res-count { 
+            text-align: right; 
+            font-weight: bold; 
+            color: var(--primary);
+        }
+        
+        .locked-message { 
+            text-align: center; 
+            color: #7f8c8d; 
+            font-style: italic; 
+            padding: 15px; 
+            background: #f9f9f9; 
+            border-radius: 8px; 
+            margin-top: 10px;
+        }
+
+        /* Admin Button Bar - 编辑和重置分开 */
+        .admin-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .admin-bar h3 { margin: 0; font-size: 1.1rem; }
+        .admin-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
+        .admin-buttons button { 
+            background: white; 
+            font-weight: bold;
+            padding: 8px 16px;
+        }
+        .admin-buttons button:hover { 
+            background: #f8f9fa; 
+        }
+        .btn-edit { color: var(--info); }
+        .btn-reset { color: var(--danger); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 { color: var(--danger); margin-top: 0; }
+        .modal-content p { color: #666; margin: 15px 0; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .modal-buttons button { flex: 1; }
+
+        /* Loading */
+        .loading-view { text-align: center; margin-top: 50px; }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1001;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.error { background: var(--danger); }
+        .toast.warning { background: var(--warning); }
+        .toast.info { background: var(--info); }
+
+        /* Info Boxes */
+        .setup-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .setup-edit-info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .election-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- VIEW 1: SETUP PAGE -->
+    <div id="setup-view" class="hidden">
+        <div class="setup-box">
+            <h2>🛠️ Election Setup</h2>
+            
+            <!-- 编辑模式提示 -->
+            <div id="setup-edit-info" class="setup-edit-info hidden">
+                ✏️ <strong>Edit Mode:</strong> Modify candidates. <strong>Votes will be preserved.</strong>
+            </div>
+            
+            <!-- 新选举提示 -->
+            <div id="setup-info" class="setup-info hidden">
+                ⚠️ Existing candidates loaded. Re-saving will <strong>reset all votes</strong>.
+            </div>
+            
+            <p style="text-align: center; color: #666;">Configure positions and candidates.</p>
+            
+            <div class="form-group">
+                <label>🔐 Admin Password (Default: admin123)</label>
+                <input type="password" id="setup-password" placeholder="Enter admin password">
+            </div>
+
+            <div id="positions-form-container"></div>
+            
+            <button class="add-position-btn" onclick="addPositionField()">➕ Add New Position</button>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="save-btn" onclick="saveElectionConfig()" style="flex: 2;">🚀 Start Election</button>
+                <button class="secondary" onclick="resetAllFields()" style="flex: 1;">🔄 Clear Form</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: VOTING PAGE -->
+    <div id="voting-view" class="hidden">
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>🗳️ NGO Annual Election</h1>
+            <p style="color: #666;">Select your candidate for each position. Results appear immediately.</p>
+        </header>
+
+        <!-- Election Info -->
+        <div id="election-info" class="election-info hidden">
+            📋 Election ID: <strong id="election-id-display">-</strong> | 
+            Started: <strong id="election-date-display">-</strong>
+        </div>
+
+        <!-- Admin Bar - 编辑和重置分开 -->
+        <div class="admin-bar hidden" id="admin-bar">
+            <h3>👑 Admin Panel</h3>
+            <div class="admin-buttons">
+                <button class="btn-edit" onclick="editCandidates()">✏️ Edit Candidates</button>
+                <button class="btn-reset" onclick="showResetModal()">🗑️ Reset Election</button>
+            </div>
+        </div>
+
+        <div id="positions-grid" class="positions-grid"></div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #999;">
+            <p>🔒 Anonymous voting. One vote per position per device.</p>
+        </div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="loading-view" class="loading-view">
+        <div class="spinner"></div>
+        <h2>Loading Election System...</h2>
+        <p style="color: #666;">Connecting to database</p>
+    </div>
+</div>
+
+<!-- Reset Modal -->
+<div id="reset-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>⚠️ Reset Election?</h3>
+        <p><strong>This will DELETE ALL votes and candidates.</strong></p>
+        <p style="color: var(--danger); font-size: 0.9rem;">⚠️ This action CANNOT be undone!</p>
+        <div class="form-group">
+            <label>Enter Admin Password to Confirm:</label>
+            <input type="password" id="reset-password" placeholder="Admin password" onkeypress="if(event.key==='Enter')confirmReset()">
+        </div>
+        <div class="modal-buttons">
+            <button class="secondary" onclick="hideResetModal()">Cancel</button>
+            <button class="danger" onclick="confirmReset()">🗑️ Reset Everything</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, getDocs, updateDoc, increment, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+    // Firebase Configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAXUttZVQ3u3N-1UJW7uF9h6j6TW0HGcKQ",
+        authDomain: "balsa-election.firebaseapp.com",
+        projectId: "balsa-election",
+        storageBucket: "balsa-election.firebasestorage.app",
+        messagingSenderId: "201567605989",
+        appId: "1:201567605989:web:94cbfd4c0ced3289ef700c",
+        measurementId: "G-EC7QSC9BMV"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Constants
+    const DEFAULT_POSITIONS = ["President", "Co-President", "VP-EO", "VP-IO", "DoHR", "DoM", "DoO", "DoPD", "DoF", "DoDEI"];
+    const ADMIN_PASSWORD = "admin123";
+
+    // State
+    let localVotes = JSON.parse(localStorage.getItem('ngo_votes') || '{}');
+    let currentElectionId = localStorage.getItem('ngo_election_id') || null;
+    let existingCandidates = [];
+    let isEditMode = false;
+
+    // DOM Elements
+    const setupView = document.getElementById('setup-view');
+    const votingView = document.getElementById('voting-view');
+    const loadingView = document.getElementById('loading-view');
+    const positionsFormContainer = document.getElementById('positions-form-container');
+    const positionsGrid = document.getElementById('positions-grid');
+    const resetModal = document.getElementById('reset-modal');
+    const toast = document.getElementById('toast');
+    const setupInfo = document.getElementById('setup-info');
+    const setupEditInfo = document.getElementById('setup-edit-info');
+    const electionInfo = document.getElementById('election-info');
+    const adminBar = document.getElementById('admin-bar');
+    const saveBtn = document.getElementById('save-btn');
+    const electionIdDisplay = document.getElementById('election-id-display');
+    const electionDateDisplay = document.getElementById('election-date-display');
+
+    // Show toast notification
+    function showToast(message, type = 'success') {
+        toast.textContent = message;
+        toast.className = 'toast show ' + type;
+        setTimeout(() => {
+            toast.className = 'toast';
+        }, 3000);
+    }
+
+    // Generate unique election ID
+    function generateElectionId() {
+        return 'ELECT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+    }
+
+    // --- INITIALIZATION ---
+    async function init() {
+        try {
+            const configDoc = await getDoc(doc(db, "system", "config"));
+            if (configDoc.exists()) {
+                const configData = configDoc.data();
+                currentElectionId = configData.electionId || null;
+                showVotingPage(configData);
+            } else {
+                showSetupPage(false);
+            }
+        } catch (error) {
+            console.error("Error checking config:", error);
+            showToast("Database connection error.", 'error');
+            loadingView.classList.add('hidden');
+        }
+    }
+
+    // --- SETUP PAGE ---
+    async function showSetupPage(editMode = false) {
+        loadingView.classList.add('hidden');
+        setupView.classList.remove('hidden');
+        votingView.classList.add('hidden');
+        adminBar.classList.add('hidden');
+        
+        isEditMode = editMode;
+        positionsFormContainer.innerHTML = '';
+        existingCandidates = [];
+        
+        // 设置按钮和提示信息
+        if (editMode) {
+            setupEditInfo.classList.remove('hidden');
+            setupInfo.classList.add('hidden');
+            saveBtn.textContent = "💾 Save Changes (Keep Votes)";
+            saveBtn.className = 'info';
+        } else {
+            setupEditInfo.classList.add('hidden');
+            setupInfo.classList.add('hidden');
+            saveBtn.textContent = "🚀 Start Election";
+            saveBtn.className = '';
+        }
+
+        // 加载现有候选人
+        try {
+            const q = query(collection(db, "candidates"));
+            const snapshot = await getDocs(q);
+            
+            if (!snapshot.empty) {
+                snapshot.forEach(docSnapshot => {
+                    existingCandidates.push({
+                        id: docSnapshot.id,
+                        ...docSnapshot.data()
+                    });
+                });
+                
+                const candidatesByPos = {};
+                existingCandidates.forEach(c => {
+                    if (!candidatesByPos[c.position]) {
+                        candidatesByPos[c.position] = [];
+                    }
+                    candidatesByPos[c.position].push(c);
+                });
+                
+                Object.keys(candidatesByPos).forEach(pos => {
+                    addPositionField(pos, candidatesByPos[pos]);
+                });
+                
+                if (!editMode) {
+                    setupInfo.classList.remove('hidden');
+                    showToast("📝 Existing candidates loaded");
+                } else {
+                    showToast("✏️ Edit Mode: Votes will be preserved", 'info');
+                }
+            } else {
+                DEFAULT_POSITIONS.forEach(pos => {
+                    addPositionField(pos);
+                });
+            }
+        } catch (e) {
+            console.error("Error loading candidates:", e);
+            DEFAULT_POSITIONS.forEach(pos => {
+                addPositionField(pos);
+            });
+        }
+    }
+
+    // Add position field
+    window.addPositionField = (defaultName = '', candidates = []) => {
+        const div = document.createElement('div');
+        div.className = 'position-setup-item';
+        
+        const positionName = defaultName || `New Position ${document.querySelectorAll('.position-setup-item').length + 1}`;
+        
+        div.innerHTML = `
+            <div class="position-header">
+                <input type="text" class="position-title-input" value="${positionName}" placeholder="Position Name">
+                <button class="remove-position-btn" onclick="removePositionField(this)">🗑️ Remove</button>
+            </div>
+            <div class="candidates-container"></div>
+            <button class="secondary" onclick="addCandidateField(this)" style="width:auto;font-size:0.85rem">➕ Candidate</button>
+        `;
+        positionsFormContainer.appendChild(div);
+        
+        const candidatesContainer = div.querySelector('.candidates-container');
+        
+        if (candidates.length > 0) {
+            candidates.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'candidate-row';
+                row.innerHTML = `
+                    <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}">
+                    <select class="cand-type">
+                        <option value="pitch" ${c.type === 'pitch' ? 'selected' : ''}>🎤 Pitching</option>
+                        <option value="nominee" ${c.type === 'nominee' ? 'selected' : ''}>📌 Nominee</option>
+                    </select>
+                    <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>
+                `;
+                candidatesContainer.appendChild(row);
+            });
+        } else {
+            addCandidateField(div.querySelector('.secondary'));
+        }
+    };
+
+    window.removePositionField = (btn) => {
+        const positionCount = document.querySelectorAll('.position-setup-item').length;
+        if (positionCount <= 1) {
+            showToast("You need at least 1 position!", 'error');
+            return;
+        }
+        btn.closest('.position-setup-item').remove();
+    };
+
+    window.addCandidateField = (btn) => {
+        const container = btn.parentElement.querySelector('.candidates-container');
+        const row = document.createElement('div');
+        row.className = 'candidate-row';
+        row.innerHTML = `
+            <input type="text" placeholder="Candidate Name" class="cand-name">
+            <select class="cand-type">
+                <option value="pitch">🎤 Pitching</option>
+                <option value="nominee">📌 Nominee</option>
+            </select>
+            <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(row);
+    };
+
+    window.resetAllFields = () => {
+        if (confirm("Clear all form fields?")) {
+            positionsFormContainer.innerHTML = '';
+            DEFAULT_POSITIONS.forEach(pos => addPositionField(pos));
+            setupInfo.classList.add('hidden');
+            setupEditInfo.classList.add('hidden');
+            showToast("Form cleared!");
+        }
+    };
+
+    // --- SAVE CONFIG ---
+    window.saveElectionConfig = async () => {
+        const password = document.getElementById('setup-password').value;
+        if (password !== ADMIN_PASSWORD) {
+            showToast("Incorrect Admin Password!", 'error');
+            return;
+        }
+
+        const candidatesData = [];
+        const positionItems = document.querySelectorAll('.position-setup-item');
+        
+        if (positionItems.length === 0) {
+            showToast("Please add at least one position!", 'error');
+            return;
+        }
+
+        let hasError = false;
+        positionItems.forEach(item => {
+            const positionName = item.querySelector('.position-title-input').value.trim();
+            if (!positionName) {
+                showToast("Please fill in all position names!", 'error');
+                hasError = true;
+                return;
+            }
+            
+            const rows = item.querySelectorAll('.candidate-row');
+            rows.forEach(row => {
+                const name = row.querySelector('.cand-name').value.trim();
+                const type = row.querySelector('.cand-type').value;
+                if (name) {
+                    candidatesData.push({ position: positionName, name: name, type: type, votes: 0 });
+                }
+            });
+        });
+
+        if (hasError) return;
+
+        if (candidatesData.length === 0) {
+            showToast("Please add at least one candidate!", 'error');
+            return;
+        }
+
+        try {
+            showToast("Saving...");
+
+            // 删除旧候选人
+            if (existingCandidates.length > 0) {
+                const batch = writeBatch(db);
+                existingCandidates.forEach(c => {
+                    batch.delete(doc(db, "candidates", c.id));
+                });
+                await batch.commit();
+            }
+
+            if (isEditMode) {
+                // ✅ 编辑模式：保留 electionId，不重置投票
+                await updateDoc(doc(db, "system", "config"), {
+                    lastEdited: new Date()
+                });
+                showToast("💾 Changes saved! Votes preserved.", 'info');
+            } else {
+                // ✅ 新选举模式：生成新 electionId，重置投票
+                const newElectionId = generateElectionId();
+                
+                await setDoc(doc(db, "system", "config"), { 
+                    status: "active", 
+                    createdAt: new Date(),
+                    electionId: newElectionId
+                });
+                
+                // 清除本地投票记录
+                localStorage.removeItem('ngo_votes');
+                localStorage.setItem('ngo_election_id', newElectionId);
+                currentElectionId = newElectionId;
+                localVotes = {};
+                
+                showToast("✅ New election started!", 'success');
+            }
+
+            // 保存新候选人
+            const batchPromises = candidatesData.map(data => 
+                addDoc(collection(db, "candidates"), data)
+            );
+            await Promise.all(batchPromises);
+
+            // 重置编辑模式
+            isEditMode = false;
+            setTimeout(() => location.reload(), 1500);
+
+        } catch (e) {
+            console.error(e);
+            showToast("Error: " + e.message, 'error');
+        }
+    };
+
+    // --- VOTING PAGE ---
+    function showVotingPage(configData) {
+        loadingView.classList.add('hidden');
+        votingView.classList.remove('hidden');
+        setupView.classList.add('hidden');
+        adminBar.classList.remove('hidden');
+        
+        // 显示选举信息
+        currentElectionId = configData.electionId || 'UNKNOWN';
+        electionIdDisplay.textContent = currentElectionId;
+        if (configData.createdAt) {
+            const date = configData.createdAt.toDate ? configData.createdAt.toDate() : new Date(configData.createdAt);
+            electionDateDisplay.textContent = date.toLocaleString();
+        }
+        electionInfo.classList.remove('hidden');
+        
+        // ✅ 关键：检查 electionId 是否变化
+        const storedElectionId = localStorage.getItem('ngo_election_id');
+        if (storedElectionId !== currentElectionId) {
+            // 新选举，清除旧投票记录
+            localStorage.removeItem('ngo_votes');
+            localStorage.setItem('ngo_election_id', currentElectionId);
+            localVotes = {};
+            console.log("New election detected, cleared old votes");
+        } else {
+            // 同一选举，保留投票记录
+            localVotes = JSON.parse(localStorage.getItem('ngo_votes') || '{}');
+        }
+        
+        loadPositionsRealtime();
+    }
+
+    function loadPositionsRealtime() {
+        const q = query(collection(db, "candidates"));
+        
+        onSnapshot(q, (snapshot) => {
+            const candidatesByPos = {};
+            
+            snapshot.forEach(docSnapshot => {
+                const data = docSnapshot.data();
+                const positionName = data.position.trim();
+                
+                if (!candidatesByPos[positionName]) {
+                    candidatesByPos[positionName] = [];
+                }
+                candidatesByPos[positionName].push({ id: docSnapshot.id, ...data });
+            });
+
+            renderVotingGrid(candidatesByPos);
+        });
+    }
+
+    function renderVotingGrid(candidatesByPos) {
+        positionsGrid.innerHTML = '';
+        
+        const positions = Object.keys(candidatesByPos).sort();
+        
+        if (positions.length === 0) {
+            positionsGrid.innerHTML = '<p style="text-align:center;color:#666;">No positions configured.</p>';
+            return;
+        }
+        
+        positions.forEach(pos => {
+            const candidates = candidatesByPos[pos];
+            const hasVoted = localVotes[pos] === true;
+            
+            const card = document.createElement('div');
+            card.className = 'position-card';
+            
+            let candidatesHTML = '';
+            let resultsHTML = '';
+            let totalVotes = 0;
+
+            candidates.forEach(c => totalVotes += (c.votes || 0));
+
+            candidates.forEach(c => {
+                const typeClass = c.type === 'pitch' ? 'type-pitch' : 'type-nominee';
+                const btnDisabled = hasVoted ? 'disabled' : '';
+                const btnText = hasVoted ? '✓ Voted' : 'Vote';
+                const btnClass = hasVoted ? 'voted' : '';
+                
+                const safePosition = encodeURIComponent(pos);
+                const safeCandidateId = encodeURIComponent(c.id);
+                const safeName = escapeHtml(c.name);
+                
+                candidatesHTML += `
+                    <div class="candidate-item ${typeClass}">
+                        <span class="candidate-name">${safeName}</span>
+                        <button class="vote-btn ${btnClass}" 
+                                onclick="window.castVote(decodeURIComponent('${safePosition}'), decodeURIComponent('${safeCandidateId}'))" 
+                                ${btnDisabled}>
+                            ${btnText}
+                        </button>
+                    </div>
+                `;
+
+                const percentage = totalVotes === 0 ? 0 : Math.round((c.votes / totalVotes) * 100);
+                resultsHTML += `
+                    <div class="result-row">
+                        <div class="res-name" title="${safeName}">${safeName}</div>
+                        <div class="res-bar-bg">
+                            <div class="res-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="res-count">${c.votes || 0}</div>
+                    </div>
+                `;
+            });
+
+            const resultsSection = hasVoted 
+                ? `<div class="results-area">${resultsHTML}</div>` 
+                : `<div class="locked-message">🔒 Vote to see results</div>`;
+
+            card.innerHTML = `
+                <div class="position-title">${escapeHtml(pos)}</div>
+                ${candidatesHTML}
+                ${resultsSection}
+            `;
+            positionsGrid.appendChild(card);
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // --- CAST VOTE ---
+    window.castVote = async (position, candidateId) => {
+        const normalizedPosition = position.trim();
+        
+        // 检查是否已投票
+        if (localVotes[normalizedPosition] === true) {
+            showToast("You already voted for this position!", 'error');
+            return;
+        }
+
+        if (!confirm(`Confirm your vote for ${position}?`)) {
+            return;
+        }
+
+        try {
+            const candidateRef = doc(db, "candidates", candidateId);
+            await updateDoc(candidateRef, {
+                votes: increment(1)
+            });
+
+            localVotes[normalizedPosition] = true;
+            localStorage.setItem('ngo_votes', JSON.stringify(localVotes));
+            
+            showToast("✅ Vote submitted!");
+            loadPositionsRealtime();
+            
+        } catch (e) {
+            console.error("Voting error:", e);
+            showToast("Failed: " + e.message, 'error');
+        }
+    };
+
+    // --- ADMIN: EDIT CANDIDATES (不重置投票) ---
+    window.editCandidates = () => {
+        isEditMode = true;
+        showSetupPage(true);
+    };
+
+    // --- ADMIN: RESET ELECTION (重置所有) ---
+    window.showResetModal = () => {
+        resetModal.classList.remove('hidden');
+        document.getElementById('reset-password').value = '';
+        document.getElementById('reset-password').focus();
+    };
+
+    window.hideResetModal = () => {
+        resetModal.classList.add('hidden');
+    };
+
+    window.confirmReset = async () => {
+        const password = document.getElementById('reset-password').value;
+        if (password !== ADMIN_PASSWORD) {
+            showToast("Incorrect Admin Password!", 'error');
+            return;
+        }
+
+        try {
+            showToast("Resetting...", 'warning');
+            
+            const q = query(collection(db, "candidates"));
+            const snapshot = await getDocs(q);
+            
+            if (snapshot.size > 0) {
+                const batch = writeBatch(db);
+                snapshot.forEach(docSnapshot => {
+                    batch.delete(docSnapshot.ref);
+                });
+                await batch.commit();
+            }
+            
+            await deleteDoc(doc(db, "system", "config"));
+            
+            localStorage.removeItem('ngo_votes');
+            localStorage.removeItem('ngo_election_id');
+            
+            showToast("✅ Reset successfully!");
+            hideResetModal();
+            
+            setTimeout(() => location.reload(), 1500);
+            
+        } catch (e) {
+            console.error("Reset error:", e);
+            showToast("Failed: " + e.message, 'error');
+        }
+    };
+
+    // Start App
+    init();
+
+</script>
+</body>
+</html>

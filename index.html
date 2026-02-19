@@ -11,95 +11,48 @@
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .card { background: white; border-radius: 16px; padding: 30px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .header { text-align: center; padding: 30px 0; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .header h1 { font-size: 2.2rem; margin-bottom: 10px; }
-        .header p { opacity: 0.9; font-size: 1.1rem; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+        .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4a90e2; margin-bottom: 20px; }
+        .header h1 { color: #2c3e50; font-size: 1.8rem; }
         .section { display: none; }
-        .section.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Form Styles */
-        .form-group { margin-bottom: 20px; }
-        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; font-size: 1rem; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px 16px; border: 2px solid #e0e6ed; border-radius: 10px; font-size: 1rem; transition: all 0.3s; }
-        .form-group input:focus, .form-group textarea:focus { border-color: #667eea; outline: none; box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
-        
-        /* Button Styles */
-        .btn { padding: 14px 28px; border: none; border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all 0.3s; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .section.active { display: block; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #2c3e50; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px 14px; border: 2px solid #e0e6ed; border-radius: 8px; font-size: 1rem; }
+        .form-group input:focus { border-color: #4a90e2; outline: none; }
+        .btn { padding: 12px 24px; border: none; border-radius: 8px; font-size: 1rem; cursor: pointer; font-weight: 600; }
+        .btn-primary { background: #4a90e2; color: white; }
         .btn-secondary { background: #95a5a6; color: white; }
         .btn-danger { background: #e74c3c; color: white; }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-warning { background: #f39c12; color: white; }
-        .btn-admin { background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%); color: white; }
-        .btn-group { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
-        
-        /* Position Card */
-        .position-card { border: 2px solid #e0e6ed; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #fafbfc; transition: all 0.3s; }
-        .position-card:hover { border-color: #667eea; box-shadow: 0 4px 20px rgba(102,126,234,0.1); }
-        .position-card h3 { color: #2c3e50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e0e6ed; font-size: 1.3rem; }
-        
-        /* Candidate Option */
-        .candidate-option { display: flex; align-items: center; padding: 15px; margin: 10px 0; background: white; border-radius: 10px; cursor: pointer; transition: all 0.3s; border: 2px solid transparent; }
-        .candidate-option:hover { background: #f8f9ff; border-color: #667eea; }
-        .candidate-option input[type="radio"] { margin-right: 15px; transform: scale(1.3); accent-color: #667eea; }
+        .btn-admin { background: #9b59b6; color: white; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+        .position-card { border: 1px solid #e0e6ed; border-radius: 10px; padding: 16px; margin-bottom: 16px; background: #fafbfc; }
+        .position-card h3 { color: #2c3e50; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+        .candidate-option { display: flex; align-items: center; padding: 10px; margin: 6px 0; background: white; border-radius: 8px; cursor: pointer; }
+        .candidate-option:hover { background: #f0f4f8; }
+        .candidate-option input { margin-right: 12px; }
         .candidate-info { flex: 1; }
-        .candidate-name { font-weight: 600; color: #2c3e50; font-size: 1.1rem; }
-        .candidate-bio { font-size: 0.9rem; color: #7f8c8d; margin-top: 5px; line-height: 1.5; }
-        
-        /* Admin Panel in Voting Section */
-        #voting-admin-panel { display: none; margin: 20px 0; padding: 15px; background: linear-gradient(135deg, #f8f4ff 0%, #f0e6ff 100%); border-radius: 10px; border: 2px solid #d4b8f0; }
-        #voting-admin-panel.active { display: block; }
-        #voting-admin-panel .admin-badge { display: inline-block; background: #9b59b6; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-right: 10px; }
-        
-        /* Position Field (Setup) */
-        .position-field { background: #f8f9fa; border: 2px solid #e0e6ed; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .position-field-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .candidates-list { margin-top: 15px; }
-        .candidate-field { background: white; border: 1px solid #e0e6ed; border-radius: 8px; padding: 15px; margin: 10px 0; }
-        .candidate-field input, .candidate-field textarea { width: 100%; margin-bottom: 10px; }
-        
-        /* Alert Boxes */
-        .alert { padding: 15px 20px; border-radius: 10px; margin: 15px 0; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
-        .alert-warning { background: #fff3cd; border: 2px solid #ffc107; color: #856404; }
-        .alert-info { background: #d1ecf1; border: 2px solid #bee5eb; color: #0c5460; }
-        .alert-success { background: #d4edda; border: 2px solid #c3e6cb; color: #155724; }
-        .alert-danger { background: #f8d7da; border: 2px solid #f5c6cb; color: #721c24; }
-        
-        /* Modal */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal.active { display: flex; animation: modalIn 0.3s ease; }
-        @keyframes modalIn { from { opacity: 0; } to { opacity: 1; } }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; max-width: 450px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .modal-content h4 { margin-bottom: 20px; color: #2c3e50; font-size: 1.4rem; }
-        .modal-content input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #e0e6ed; border-radius: 8px; font-size: 1rem; }
-        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
-        
-        /* Loading */
-        #loading { text-align: center; padding: 60px 20px; background: white; border-radius: 16px; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #e0e6ed; border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        .candidate-name { font-weight: 600; color: #2c3e50; }
+        .candidate-bio { font-size: 0.9rem; color: #7f8c8d; margin-top: 4px; }
+        .alert { padding: 12px; border-radius: 8px; margin: 10px 0; }
+        .alert-warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; }
+        .alert-info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        #loading { text-align: center; padding: 40px; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #e0e6ed; border-top-color: #4a90e2; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        
-        /* Results */
-        .result-bar { height: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 15px; margin: 10px 0; transition: width 0.5s ease; }
-        .result-item { padding: 15px; border-bottom: 1px solid #e0e6ed; }
-        .result-item:last-child { border-bottom: none; }
-        
-        /* Election Info Bar */
-        .election-info-bar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .election-info-bar span { font-size: 0.95rem; }
-        
-        /* Responsive */
-        @media (max-width: 600px) {
-            .btn-group { flex-direction: column; }
-            .btn { width: 100%; justify-content: center; }
-            .election-info-bar { flex-direction: column; text-align: center; }
-            .header h1 { font-size: 1.6rem; }
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 24px; border-radius: 12px; max-width: 400px; width: 90%; }
+        .modal-content h4 { margin-bottom: 16px; }
+        .modal-content input { width: 100%; padding: 10px; margin: 10px 0; border: 2px solid #e0e6ed; border-radius: 6px; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+        #voting-admin-panel { display: none; margin: 15px 0; padding: 12px; background: #f8f4ff; border: 1px solid #d4b8f0; border-radius: 8px; }
+        #voting-admin-panel.active { display: block; }
+        .position-field { background: #f8f9fa; border: 1px solid #e0e6ed; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .candidates-list { margin-top: 12px; }
+        .candidate-field { background: white; border: 1px solid #e0e6ed; border-radius: 6px; padding: 12px; margin: 8px 0; }
     </style>
 </head>
 <body>
@@ -109,135 +62,83 @@
             <p>Secure • Anonymous • Real-time Results</p>
         </div>
 
-        <!-- 🔧 SETUP SECTION -->
+        <!-- Setup Section -->
         <div id="setup-section" class="section card">
-            <h2 style="margin-bottom: 15px; color: #2c3e50;">🛠️ Election Setup</h2>
-            
+            <h2>🛠️ Election Setup</h2>
             <div class="alert alert-warning">
-                ⚠️ <strong>Note:</strong> Existing candidates loaded from database. You can modify and re-save.
+                ⚠️ Existing candidates loaded from database. You can modify and re-save.
             </div>
-            
-            <p style="margin: 15px 0; color: #7f8c8d;">Configure positions and candidates. Once saved, voting begins.</p>
+            <p style="margin: 12px 0;">Configure positions and candidates. Once saved, voting begins.</p>
             
             <div class="form-group">
-                <label>🔐 Setup Password <small style="color: #7f8c8d; font-weight: normal;">(Default: admin123)</small></label>
+                <label>🔐 Setup Password <small>(Default: admin123)</small></label>
                 <input type="password" id="setup-password" placeholder="Enter admin password">
             </div>
             
-            <div id="positions-container">
-                <!-- Positions will be dynamically added here -->
-            </div>
+            <div id="positions-container"></div>
             
-            <button type="button" onclick="addPositionField()" class="btn btn-secondary" style="margin: 15px 0;">
-                ➕ Add New Position
-            </button>
+            <button type="button" onclick="addPositionField()" class="btn btn-secondary" style="margin: 10px 0;">➕ Add New Position</button>
             
             <div class="btn-group">
-                <button type="button" onclick="saveElectionConfig()" class="btn btn-primary">
-                    🚀 Start / Restart Election
-                </button>
-                <button type="button" onclick="clearSetupForm()" class="btn btn-secondary">
-                    🔄 Clear Form
-                </button>
-                <button type="button" onclick="showSection('voting-section')" class="btn btn-success">
-                    ← Back to Voting
-                </button>
+                <button type="button" onclick="saveElectionConfig()" class="btn btn-primary">🚀 Start Election</button>
+                <button type="button" onclick="clearSetupForm()" class="btn btn-secondary">🔄 Reset Form</button>
             </div>
         </div>
 
-        <!-- 🗳️ VOTING SECTION -->
+        <!-- Voting Section -->
         <div id="voting-section" class="section card">
-            <h2 style="margin-bottom: 15px; color: #2c3e50;">🗳️ NGO Annual Election</h2>
-            <p style="margin: 10px 0; color: #7f8c8d;">Select your candidate for each position. Results appear immediately after voting.</p>
+            <h2>🗳️ NGO Annual Election</h2>
+            <p style="margin: 10px 0;">Select your candidate for each position. Results appear immediately after voting.</p>
             
-            <!-- Election Info Bar -->
-            <div class="election-info-bar">
-                <span>📋 Election ID: <strong id="election-id-display">-</strong></span>
-                <span>🕐 Started: <strong id="election-start-display">-</strong></span>
+            <div class="alert alert-info" style="font-size: 0.9rem;">
+                📋 Election ID: <span id="election-id-display">-</span> | Started: <span id="election-start-display">-</span>
             </div>
             
-            <!-- 🔧 ADMIN EDIT PANEL - NEW FEATURE -->
+            <!-- Admin Edit Panel -->
             <div id="voting-admin-panel">
-                <span class="admin-badge">👤 Admin Mode</span>
-                <button type="button" onclick="openEditFromVoting()" class="btn btn-admin" style="padding: 10px 20px; font-size: 0.95rem;">
-                    ✏️ Edit Candidates/Positions
-                </button>
-                <span id="admin-status" style="margin-left: 15px; color: #7f8c8d; font-size: 0.9rem;"></span>
+                <button type="button" onclick="openEditFromVoting()" class="btn btn-admin">✏️ Edit Candidates/Positions (Admin)</button>
             </div>
             
-            <div id="voting-positions-container">
-                <!-- Voting options will be rendered here -->
+            <div id="voting-positions-container"></div>
+            
+            <button type="button" onclick="submitVote()" class="btn btn-primary" style="width: 100%; margin-top: 20px;">✅ Submit My Vote</button>
+            
+            <div class="alert alert-warning" style="margin-top: 16px;">
+                🔒 Your vote is anonymous. Each position can only be voted once per device.
             </div>
             
-            <button type="button" onclick="submitVote()" class="btn btn-primary" style="width: 100%; margin-top: 25px; font-size: 1.1rem;">
-                ✅ Submit My Vote
-            </button>
-            
-            <div class="alert alert-info" style="margin-top: 20px;">
-                🔒 Your vote is anonymous. Each position can only be voted once per election.
-            </div>
-            
-            <!-- Admin Only Section -->
-            <div id="admin-only-section" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 2px dashed #e0e6ed;">
-                <h4 style="color: #9b59b6; margin-bottom: 15px;">⚠️ Admin Only</h4>
-                <div class="btn-group">
-                    <button type="button" onclick="openResetModal()" class="btn btn-danger">
-                        🔄 Reset & Edit Candidates
-                    </button>
-                    <button type="button" onclick="showSection('results-section'); loadResults();" class="btn btn-warning">
-                        📊 View Results
-                    </button>
-                </div>
+            <div id="admin-only-section" style="display: none; margin-top: 20px; padding-top: 16px; border-top: 2px dashed #e0e6ed;">
+                <h4 style="color: #9b59b6; margin-bottom: 10px;">⚠️ Admin Only</h4>
+                <button type="button" onclick="openResetModal()" class="btn btn-danger">🔄 Reset Election (Back to Setup)</button>
             </div>
         </div>
 
-        <!-- 📊 RESULTS SECTION -->
-        <div id="results-section" class="section card">
-            <h2 style="margin-bottom: 15px; color: #2c3e50;">📊 Live Results</h2>
-            <div class="alert alert-info" style="margin-bottom: 20px;">
-                🔄 Results update in real-time as votes are cast
-            </div>
-            <div id="results-container">
-                <!-- Results will be rendered here -->
-            </div>
-            <div class="btn-group" style="margin-top: 25px;">
-                <button type="button" onclick="showSection('voting-section')" class="btn btn-secondary">
-                    ← Back to Voting
-                </button>
-                <button type="button" onclick="loadResults()" class="btn btn-primary">
-                    🔄 Refresh Results
-                </button>
-            </div>
-        </div>
-
-        <!-- ⚙️ LOADING SECTION -->
+        <!-- Loading -->
         <div id="loading" class="section">
             <div class="spinner"></div>
-            <h3 style="color: #2c3e50; margin-bottom: 10px;">Loading Election System...</h3>
+            <p>Loading Election System...</p>
             <p id="loading-status" style="color: #7f8c8d;">Connecting to database</p>
         </div>
 
-        <!-- ⚠️ RESET CONFIRMATION MODAL -->
+        <!-- Reset Modal -->
         <div id="reset-modal" class="modal">
             <div class="modal-content">
                 <h4>⚠️ Reset Election?</h4>
-                <p style="margin: 15px 0; color: #7f8c8d;">This will reset all votes and allow everyone to vote again.</p>
-                <div class="alert alert-danger" style="margin: 15px 0;">
-                    ⚠️ <strong>This action CANNOT be undone!</strong>
-                </div>
+                <p style="margin: 12px 0;">This will DELETE ALL votes and candidates, and return to Setup page.</p>
+                <p style="color: #e74c3c; font-weight: 600; margin: 8px 0;">⚠️ This action CANNOT be undone!</p>
                 <input type="password" id="reset-password-input" placeholder="Enter Admin Password to Confirm:">
                 <div class="modal-buttons">
                     <button type="button" onclick="closeResetModal()" class="btn btn-secondary">Cancel</button>
-                    <button type="button" onclick="confirmResetElection()" class="btn btn-danger">✅ Confirm Reset</button>
+                    <button type="button" onclick="confirmResetElection()" class="btn btn-danger">🗑️ Yes, Reset Everything</button>
                 </div>
             </div>
         </div>
 
-        <!-- 🔐 ADMIN AUTH MODAL (for editing from voting page) -->
+        <!-- Admin Auth Modal -->
         <div id="admin-auth-modal" class="modal">
             <div class="modal-content">
                 <h4>🔐 Admin Verification</h4>
-                <p style="margin: 15px 0; color: #7f8c8d;">Enter password to edit candidates/positions:</p>
+                <p style="margin: 12px 0;">Enter password to edit candidates/positions:</p>
                 <input type="password" id="admin-password-input" placeholder="Admin password">
                 <div class="modal-buttons">
                     <button type="button" onclick="closeAdminModal()" class="btn btn-secondary">Cancel</button>
@@ -248,9 +149,7 @@
     </div>
 
     <script>
-        // ========================================
-        // 🔧 FIREBASE CONFIGURATION
-        // ========================================
+        // Firebase Config - REPLACE WITH YOUR ACTUAL CONFIG
         const firebaseConfig = {
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -260,43 +159,34 @@
             appId: "YOUR_APP_ID"
         };
         
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // ========================================
-        // 🌍 GLOBAL STATE
-        // ========================================
+        // Global State
         let currentElectionId = null;
         let userVotes = {};
         let isAdmin = false;
         let isEditingFromVoting = false;
         let votingStateBeforeEdit = null;
-        let existingCandidatesData = {}; // Store existing candidate data for safe updates
         
-        // ========================================
-        // 🔐 ADMIN & AUTH FUNCTIONS
-        // ========================================
-        
+        // Admin Check
         function checkAdminAccess() {
             const saved = sessionStorage.getItem('isAdmin');
             if (saved === 'true') {
                 isAdmin = true;
                 document.getElementById('voting-admin-panel').classList.add('active');
                 document.getElementById('admin-only-section').style.display = 'block';
-                document.getElementById('admin-status').textContent = '✓ Verified';
             }
         }
         
+        // Open Edit from Voting
         function openEditFromVoting() {
             if (isAdmin) {
-                // Save current voting state before switching
                 votingStateBeforeEdit = {};
                 document.querySelectorAll('#voting-section input[type="radio"]:checked').forEach(radio => {
-                    const posName = radio.name.replace('position_', '');
-                    votingStateBeforeEdit[posName] = radio.value;
+                    const pos = radio.name.replace('position_', '');
+                    votingStateBeforeEdit[pos] = radio.value;
                 });
-                
                 isEditingFromVoting = true;
                 showSection('setup-section');
                 loadElectionConfigForEdit();
@@ -312,27 +202,20 @@
         
         async function verifyAdminAndEdit() {
             const password = document.getElementById('admin-password-input').value;
-            if (!password) { alert('⚠️ Please enter password'); return; }
-            
             try {
                 const configSnap = await db.collection('system').doc('config').get();
                 const adminPwd = configSnap.data()?.adminPassword || 'admin123';
-                
                 if (password === adminPwd) {
                     sessionStorage.setItem('isAdmin', 'true');
                     isAdmin = true;
                     closeAdminModal();
                     document.getElementById('voting-admin-panel').classList.add('active');
                     document.getElementById('admin-only-section').style.display = 'block';
-                    document.getElementById('admin-status').textContent = '✓ Verified';
-                    
-                    // Save current voting state
                     votingStateBeforeEdit = {};
                     document.querySelectorAll('#voting-section input[type="radio"]:checked').forEach(radio => {
-                        const posName = radio.name.replace('position_', '');
-                        votingStateBeforeEdit[posName] = radio.value;
+                        const pos = radio.name.replace('position_', '');
+                        votingStateBeforeEdit[pos] = radio.value;
                     });
-                    
                     isEditingFromVoting = true;
                     showSection('setup-section');
                     loadElectionConfigForEdit();
@@ -340,60 +223,48 @@
                     alert('❌ Incorrect password');
                 }
             } catch (error) {
-                console.error('Auth error:', error);
-                alert('⚠️ Verification failed. Please try again.');
+                alert('⚠️ Verification failed');
             }
         }
-        
-        // ========================================
-        // 🔄 NAVIGATION & UI FUNCTIONS
-        // ========================================
         
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
-            
-            if (sectionId !== 'loading') {
-                document.getElementById('loading').classList.remove('active');
-            }
         }
         
         function addPositionField(positionData = null) {
             const container = document.getElementById('positions-container');
-            const posId = positionData?.id || 'pos_' + Date.now() + Math.random().toString(36).substr(2, 5);
-            const positionNumber = container.children.length + 1;
-            
+            const posId = positionData?.id || 'pos_' + Date.now();
             const div = document.createElement('div');
             div.className = 'position-field';
             div.dataset.positionId = posId;
             div.innerHTML = `
-                <div class="position-field-header">
-                    <strong style="color: #667eea; font-size: 1.1rem;">Position #${positionNumber}</strong>
-                    <button type="button" onclick="this.closest('.position-field').remove()" class="btn btn-danger" style="padding: 8px 16px; font-size: 0.9rem;">🗑️ Remove</button>
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <strong>Position #${container.children.length + 1}</strong>
+                    <button type="button" onclick="this.closest('.position-field').remove()" class="btn btn-danger" style="padding:6px 12px;">🗑️ Remove</button>
                 </div>
                 <div class="form-group">
                     <label>Position Name</label>
-                    <input type="text" class="position-name" value="${positionData?.name || ''}" placeholder="e.g., President, Secretary, Treasurer">
+                    <input type="text" class="position-name" value="${positionData?.name || ''}" placeholder="e.g., President">
                 </div>
                 <div class="form-group">
-                    <label>Position Description (optional)</label>
-                    <textarea class="position-desc" rows="2" placeholder="Brief description of this position...">${positionData?.description || ''}</textarea>
+                    <label>Description (optional)</label>
+                    <textarea class="position-desc" rows="2">${positionData?.description || ''}</textarea>
                 </div>
                 <div class="candidates-list" id="candidates-${posId}">
-                    ${positionData?.candidates?.map((c, i) => `
+                    ${positionData?.candidates?.map(c => `
                         <div class="candidate-field" data-candidate-id="${c.id}">
-                            <input type="text" class="candidate-name" value="${c.name || ''}" placeholder="Candidate name" style="margin-bottom: 10px;">
-                            <textarea class="candidate-bio" rows="2" placeholder="Brief bio or manifesto..." style="margin-bottom: 10px;">${c.bio || ''}</textarea>
+                            <input type="text" class="candidate-name" value="${c.name || ''}" placeholder="Candidate name" style="width:100%; margin-bottom:8px;">
+                            <textarea class="candidate-bio" placeholder="Bio" style="width:100%; margin-bottom:8px;">${c.bio || ''}</textarea>
                             <input type="hidden" class="candidate-id" value="${c.id}">
                             <input type="hidden" class="candidate-votes" value="${c.votes || 0}">
-                            <input type="hidden" class="candidate-positionId" value="${c.positionId || posId}">
                             <input type="hidden" class="candidate-electionId" value="${c.electionId || ''}">
-                            <button type="button" onclick="this.closest('.candidate-field').remove()" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Remove Candidate</button>
+                            <button type="button" onclick="this.closest('.candidate-field').remove()" style="background:#e74c3c;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Remove</button>
                         </div>
-                    `).join('') || '<p style="color: #7f8c8d; font-style: italic;">No candidates added yet. Click "Add Candidate" below.</p>'}
+                    `).join('') || ''}
                 </div>
-                <button type="button" onclick="addCandidateField('${posId}')" class="btn btn-secondary" style="margin: 15px 0; font-size: 0.95rem;">➕ Add Candidate to This Position</button>
-                <hr style="margin: 25px 0; border: none; border-top: 2px dashed #e0e6ed;">
+                <button type="button" onclick="addCandidateField('${posId}')" class="btn btn-secondary" style="margin:8px 0;">➕ Add Candidate</button>
+                <hr style="margin:20px 0;">
             `;
             container.appendChild(div);
         }
@@ -402,269 +273,126 @@
             const container = document.getElementById(`candidates-${positionId}`);
             const div = document.createElement('div');
             div.className = 'candidate-field';
-            div.dataset.candidateId = 'cand_' + Date.now() + Math.random().toString(36).substr(2, 5);
             div.innerHTML = `
-                <input type="text" class="candidate-name" placeholder="Candidate name" style="margin-bottom: 10px;">
-                <textarea class="candidate-bio" rows="2" placeholder="Brief bio or manifesto..." style="margin-bottom: 10px;"></textarea>
-                <input type="hidden" class="candidate-id" value="${div.dataset.candidateId}">
+                <input type="text" class="candidate-name" placeholder="Candidate name" style="width:100%; margin-bottom:8px;">
+                <textarea class="candidate-bio" placeholder="Bio" style="width:100%; margin-bottom:8px;"></textarea>
+                <input type="hidden" class="candidate-id" value="cand_${Date.now()}">
                 <input type="hidden" class="candidate-votes" value="0">
-                <input type="hidden" class="candidate-positionId" value="${positionId}">
                 <input type="hidden" class="candidate-electionId" value="">
-                <button type="button" onclick="this.closest('.candidate-field').remove()" style="background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">Remove Candidate</button>
+                <button type="button" onclick="this.closest('.candidate-field').remove()" style="background:#e74c3c;color:white;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;">Remove</button>
             `;
-            
-            // Remove "no candidates" message if present
-            const noCandMsg = container.querySelector('p');
-            if (noCandMsg) noCandMsg.remove();
-            
             container.appendChild(div);
         }
         
         function clearSetupForm() {
-            if (confirm('Clear all form data? This will not affect saved data in database.')) {
+            if (confirm('Clear all form data?')) {
                 document.getElementById('positions-container').innerHTML = '';
                 document.getElementById('setup-password').value = '';
-                existingCandidatesData = {};
             }
         }
         
-        // ========================================
-        // 💾 FIRESTORE OPERATIONS - SAFE UPDATES
-        // ========================================
-        
-        /**
-         * 🔑 KEY FUNCTION: Update candidate metadata WITHOUT affecting votes
-         * This ensures historical vote records remain intact
-         */
-        async function safeUpdateCandidate(candidateId, metadataUpdates) {
-            const candidateRef = db.collection('candidates').doc(candidateId);
-            
-            // Define protected fields that should NEVER be overwritten during edit
-            const PROTECTED_FIELDS = ['votes', 'voteHistory', 'createdAt', 'electionId', 'positionId'];
-            
-            // Build safe update object (exclude protected fields)
-            const safeUpdates = {};
-            for (let key in metadataUpdates) {
-                if (!PROTECTED_FIELDS.includes(key)) {
-                    safeUpdates[key] = metadataUpdates[key];
-                }
-            }
-            safeUpdates.lastModified = new Date();
-            
-            // Perform update - votes field remains untouched
-            await candidateRef.update(safeUpdates);
-            console.log(`✅ Updated candidate ${candidateId} metadata (votes preserved)`);
+        // Safe Update - Preserve Votes
+        async function safeUpdateCandidate(candidateId, updates) {
+            const ref = db.collection('candidates').doc(candidateId);
+            const snap = await ref.get();
+            if (!snap.exists) return;
+            const current = snap.data();
+            await ref.update({
+                name: updates.name !== undefined ? updates.name : current.name,
+                bio: updates.bio !== undefined ? updates.bio : current.bio,
+                lastModified: new Date()
+            });
         }
         
-        /**
-         * Update position metadata safely
-         */
-        async function safeUpdatePosition(positionId, updates) {
-            const positionRef = db.collection('positions').doc(positionId);
-            const PROTECTED = ['totalVotes', 'voterCount', 'createdAt', 'electionId'];
-            
-            const safeUpdates = {};
-            for (let k in updates) {
-                if (!PROTECTED.includes(k)) safeUpdates[k] = updates[k];
-            }
-            safeUpdates.lastModified = new Date();
-            
-            await positionRef.update(safeUpdates);
-        }
-        
-        /**
-         * Save election configuration (initial setup or admin edit)
-         */
         async function saveElectionConfig() {
             const password = document.getElementById('setup-password').value;
-            if (!password) { 
-                alert('⚠️ Please enter admin password'); 
-                return; 
-            }
-            
+            if (!password) { alert('⚠️ Please enter admin password'); return; }
             try {
-                // Verify admin
                 const configSnap = await db.collection('system').doc('config').get();
                 const adminPwd = configSnap.data()?.adminPassword || 'admin123';
-                if (password !== adminPwd) { 
-                    alert('❌ Incorrect password'); 
-                    return; 
-                }
+                if (password !== adminPwd) { alert('❌ Incorrect password'); return; }
                 
-                // Collect positions & candidates from form
                 const positions = [];
-                const updatesOnly = isEditingFromVoting; // Flag to determine if we're editing existing
-                
                 document.querySelectorAll('.position-field').forEach(posEl => {
                     const posId = posEl.dataset.positionId;
                     const candidates = [];
-                    
                     posEl.querySelectorAll('.candidate-field').forEach(candEl => {
                         const name = candEl.querySelector('.candidate-name').value.trim();
                         if (!name) return;
-                        
-                        const existingVotes = parseInt(candEl.querySelector('.candidate-votes')?.value) || 0;
-                        const existingCandId = candEl.querySelector('.candidate-id')?.value;
-                        const existingElectionId = candEl.querySelector('.candidate-electionId')?.value;
-                        
                         candidates.push({
-                            id: existingCandId || 'cand_' + Date.now(),
+                            id: candEl.querySelector('.candidate-id').value,
                             name: name,
                             bio: candEl.querySelector('.candidate-bio').value.trim(),
-                            // 🔑 CRITICAL: Preserve existing votes if candidate already exists
-                            votes: existingVotes,
-                            positionId: posId,
-                            electionId: existingElectionId || '',
-                            photo: '',
-                            lastModified: new Date()
+                            votes: parseInt(candEl.querySelector('.candidate-votes').value) || 0,
+                            electionId: candEl.querySelector('.candidate-electionId').value || ''
                         });
                     });
-                    
                     if (candidates.length > 0) {
                         positions.push({
                             id: posId,
                             name: posEl.querySelector('.position-name').value.trim(),
                             description: posEl.querySelector('.position-desc').value.trim(),
-                            candidates: candidates,
-                            createdAt: new Date()
+                            candidates: candidates
                         });
                     }
                 });
                 
-                if (positions.length === 0) { 
-                    alert('⚠️ Add at least one position with candidates'); 
-                    return; 
-                }
+                if (positions.length === 0) { alert('⚠️ Add at least one position'); return; }
                 
-                // Generate election ID (new or keep existing)
                 const electionId = currentElectionId || 'election_' + Date.now();
                 currentElectionId = electionId;
                 
-                if (updatesOnly) {
-                    // 🔑 EDIT MODE: Only update metadata, preserve votes
-                    await updateExistingElection(positions, electionId);
-                } else {
-                    // NEW ELECTION MODE: Full setup
-                    await createNewElection(positions, electionId, password);
+                const batch = db.batch();
+                positions.forEach(pos => {
+                    const posRef = db.collection('positions').doc(pos.id);
+                    if (isEditingFromVoting) {
+                        batch.update(posRef, { name: pos.name, description: pos.description, lastModified: new Date() });
+                    } else {
+                        batch.set(posRef, { id: pos.id, name: pos.name, description: pos.description, electionId: electionId, createdAt: new Date(), totalVotes: 0 });
+                    }
+                    pos.candidates.forEach(cand => {
+                        const candRef = db.collection('candidates').doc(cand.id);
+                        if (isEditingFromVoting && cand.electionId) {
+                            batch.update(candRef, { name: cand.name, bio: cand.bio, lastModified: new Date() });
+                        } else {
+                            batch.set(candRef, { ...cand, positionId: pos.id, electionId: electionId, photo: '' });
+                        }
+                    });
+                });
+                
+                if (!isEditingFromVoting) {
+                    const configRef = db.collection('system').doc('config');
+                    batch.set(configRef, { currentElectionId: electionId, electionStatus: 'active', startedAt: new Date(), adminPassword: password }, { merge: true });
                 }
                 
+                await batch.commit();
                 alert('✅ Election configured successfully!');
                 
-                // Return to voting section after save
                 if (isEditingFromVoting) {
                     returnToVotingAfterEdit();
                 } else {
                     showSection('voting-section');
                     loadVotingInterface();
                 }
-                
             } catch (error) {
-                console.error('Save error:', error);
                 alert('⚠️ Failed to save: ' + error.message);
             }
         }
         
-        /**
-         * Update existing election (edit mode) - preserves all votes
-         */
-        async function updateExistingElection(positions, electionId) {
-            const batch = db.batch();
-            
-            positions.forEach(pos => {
-                // Update position metadata only
-                const posRef = db.collection('positions').doc(pos.id);
-                batch.update(posRef, {
-                    name: pos.name,
-                    description: pos.description,
-                    lastModified: new Date()
-                });
-                
-                // Update candidates metadata only (votes preserved)
-                pos.candidates.forEach(cand => {
-                    const candRef = db.collection('candidates').doc(cand.id);
-                    // Only update name, bio - NOT votes
-                    batch.update(candRef, {
-                        name: cand.name,
-                        bio: cand.bio,
-                        lastModified: new Date()
-                    });
-                });
-            });
-            
-            await batch.commit();
-            console.log('✅ Existing election updated (votes preserved)');
-        }
-        
-        /**
-         * Create new election (fresh setup)
-         */
-        async function createNewElection(positions, electionId, password) {
-            const batch = db.batch();
-            
-            // Save positions
-            positions.forEach(pos => {
-                const posRef = db.collection('positions').doc(pos.id);
-                batch.set(posRef, {
-                    id: pos.id,
-                    name: pos.name,
-                    description: pos.description,
-                    electionId: electionId,
-                    createdAt: pos.createdAt,
-                    totalVotes: 0
-                });
-                
-                // Save candidates
-                pos.candidates.forEach(cand => {
-                    const candRef = db.collection('candidates').doc(cand.id);
-                    batch.set(candRef, {
-                        ...cand,
-                        electionId: electionId
-                    });
-                });
-            });
-            
-            // Update system config
-            const configRef = db.collection('system').doc('config');
-            batch.set(configRef, {
-                currentElectionId: electionId,
-                electionStatus: 'active',
-                startedAt: new Date(),
-                adminPassword: password
-            }, { merge: true });
-            
-            await batch.commit();
-            console.log('✅ New election created');
-        }
-        
-        // ========================================
-        // 🗳️ VOTING INTERFACE FUNCTIONS
-        // ========================================
-        
         async function loadVotingInterface() {
             try {
-                // Get current election
                 const configSnap = await db.collection('system').doc('config').get();
                 const electionId = configSnap.data()?.currentElectionId;
-                
-                if (!electionId) { 
-                    showSection('setup-section'); 
-                    return; 
-                }
+                if (!electionId) { showSection('setup-section'); return; }
                 
                 currentElectionId = electionId;
                 document.getElementById('election-id-display').textContent = electionId;
-                
                 const startedAt = configSnap.data()?.startedAt;
                 if (startedAt) {
-                    document.getElementById('election-start-display').textContent = 
-                        new Date(startedAt.seconds * 1000).toLocaleDateString();
+                    document.getElementById('election-start-display').textContent = new Date(startedAt.seconds * 1000).toLocaleDateString();
                 }
                 
-                // Load positions
-                const positionsSnap = await db.collection('positions')
-                    .where('electionId', '==', electionId)
-                    .get();
-                
+                const positionsSnap = await db.collection('positions').where('electionId', '==', electionId).get();
                 const container = document.getElementById('voting-positions-container');
                 container.innerHTML = '';
                 
@@ -672,27 +400,24 @@
                     const pos = posDoc.data();
                     const posDiv = document.createElement('div');
                     posDiv.className = 'position-card';
-                    posDiv.dataset.positionId = pos.id;
-                    
                     posDiv.innerHTML = `
                         <h3>${pos.name}</h3>
-                        ${pos.description ? `<p style="color:#7f8c8d; font-size:0.95rem; margin-bottom:15px;">${pos.description}</p>` : ''}
+                        ${pos.description ? `<p style="color:#7f8c8d;margin-bottom:12px;">${pos.description}</p>` : ''}
                         <div class="candidates-list">
                             ${pos.candidates ? pos.candidates.map(cand => `
                                 <label class="candidate-option">
-                                    <input type="radio" name="position_${pos.id}" value="${cand.id}" data-position="${pos.id}">
+                                    <input type="radio" name="position_${pos.id}" value="${cand.id}">
                                     <div class="candidate-info">
                                         <div class="candidate-name">${cand.name}</div>
                                         ${cand.bio ? `<div class="candidate-bio">${cand.bio}</div>` : ''}
                                     </div>
                                 </label>
-                            `).join('') : '<p style="color:#999; font-style:italic;">No candidates for this position</p>'}
+                            `).join('') : '<p>No candidates</p>'}
                         </div>
                     `;
                     container.appendChild(posDiv);
                 });
                 
-                // Restore user selections if any (from localStorage)
                 const saved = localStorage.getItem(`votes_${electionId}`);
                 if (saved) {
                     userVotes = JSON.parse(saved);
@@ -702,295 +427,102 @@
                     });
                 }
                 
-                // Set up real-time listeners for candidate updates (admin edits)
-                positionsSnap.forEach(posDoc => {
-                    db.collection('candidates')
-                        .where('electionId', '==', electionId)
-                        .where('positionId', '==', posDoc.data().id)
-                        .onSnapshot(snapshot => {
-                            snapshot.docChanges().forEach(change => {
-                                if (change.type === 'modified') {
-                                    const cand = change.doc.data();
-                                    const nameEl = document.querySelector(`[value="${cand.id}"] .candidate-name`);
-                                    const bioEl = document.querySelector(`[value="${cand.id}"] .candidate-bio`);
-                                    if (nameEl) nameEl.textContent = cand.name;
-                                    if (bioEl) bioEl.textContent = cand.bio || '';
-                                }
-                            });
-                        });
-                });
-                
                 checkAdminAccess();
-                
             } catch (error) {
-                console.error('Load voting error:', error);
-                alert('⚠️ Failed to load voting interface: ' + error.message);
+                alert('⚠️ Failed to load: ' + error.message);
             }
         }
         
         async function submitVote() {
-            if (!currentElectionId) { 
-                alert('⚠️ No active election'); 
-                return; 
-            }
-            
-            // Collect selections
+            if (!currentElectionId) { alert('⚠️ No active election'); return; }
             const selections = {};
-            let hasSelection = false;
-            
             document.querySelectorAll('.position-card').forEach(posCard => {
-                const posId = posCard.dataset.positionId;
-                const selected = posCard.querySelector(`[name="position_${posId}"]:checked`);
-                if (selected) {
-                    selections[posId] = selected.value;
-                    hasSelection = true;
-                }
+                const posId = posCard.querySelector('.candidate-option input')?.name?.replace('position_', '');
+                const selected = posCard.querySelector('input[type="radio"]:checked');
+                if (posId && selected) selections[posId] = selected.value;
             });
-            
-            if (!hasSelection) { 
-                alert('⚠️ Please select at least one candidate'); 
-                return; 
-            }
+            if (Object.keys(selections).length === 0) { alert('⚠️ Please select at least one candidate'); return; }
             
             try {
-                // Save to localStorage for recovery
                 localStorage.setItem(`votes_${currentElectionId}`, JSON.stringify(selections));
-                
-                // Submit to Firestore
                 const batch = db.batch();
-                for (const [posId, candId] of Object.entries(selections)) {
+                for (const candId of Object.values(selections)) {
                     const candRef = db.collection('candidates').doc(candId);
-                    batch.update(candRef, {
-                        votes: firebase.firestore.FieldValue.increment(1)
-                    });
+                    batch.update(candRef, { votes: firebase.firestore.FieldValue.increment(1) });
                 }
                 await batch.commit();
-                
-                alert('✅ Vote submitted successfully!');
-                showSection('results-section');
-                loadResults();
-                
+                alert('✅ Vote submitted!');
+                showSection('loading');
+                setTimeout(() => { alert('📊 Check results with admin'); }, 500);
             } catch (error) {
-                console.error('Vote error:', error);
-                alert('⚠️ Failed to submit vote: ' + error.message);
+                alert('⚠️ Failed: ' + error.message);
             }
         }
         
-        // ========================================
-        // 📊 RESULTS FUNCTIONS
-        // ========================================
-        
-        async function loadResults() {
-            if (!currentElectionId) return;
-            
-            const container = document.getElementById('results-container');
-            container.innerHTML = '<p style="text-align:center; padding:30px; color:#7f8c8d;">Loading results...</p>';
-            
-            try {
-                const positionsSnap = await db.collection('positions')
-                    .where('electionId', '==', currentElectionId)
-                    .get();
-                
-                let html = '';
-                positionsSnap.forEach(posDoc => {
-                    const pos = posDoc.data();
-                    html += `<div class="position-card"><h3>${pos.name}</h3>`;
-                    
-                    // Get candidates sorted by votes
-                    const candsSnap = await db.collection('candidates')
-                        .where('electionId', '==', currentElectionId)
-                        .where('positionId', '==', pos.id)
-                        .orderBy('votes', 'desc')
-                        .get();
-                    
-                    let totalVotes = 0;
-                    const candidates = [];
-                    candsSnap.forEach(candDoc => {
-                        const cand = candDoc.data();
-                        candidates.push(cand);
-                        totalVotes += (cand.votes || 0);
-                    });
-                    
-                    candidates.forEach((cand, index) => {
-                        const votes = cand.votes || 0;
-                        const percentage = totalVotes > 0 ? ((votes / totalVotes) * 100).toFixed(1) : 0;
-                        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '📍';
-                        
-                        html += `
-                            <div class="result-item">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-                                    <span style="font-weight:600;">${medal} ${cand.name}</span>
-                                    <strong>${votes} votes (${percentage}%)</strong>
-                                </div>
-                                <div class="result-bar" style="width: ${percentage}%;"></div>
-                            </div>
-                        `;
-                    });
-                    html += '</div>';
-                });
-                
-                container.innerHTML = html || '<p style="text-align:center; padding:30px; color:#7f8c8d;">No results yet</p>';
-                
-            } catch (error) {
-                console.error('Results error:', error);
-                container.innerHTML = '<p style="color:#e74c3c; text-align:center; padding:30px;">Failed to load results</p>';
-            }
-        }
-        
-        // ========================================
-        // 🔧 EDIT FROM VOTING FUNCTIONS
-        // ========================================
-        
-        /**
-         * Load existing election config for editing
-         */
         async function loadElectionConfigForEdit() {
-            if (!currentElectionId) {
-                alert('⚠️ No active election to edit');
-                showSection('voting-section');
-                return;
-            }
-            
+            if (!currentElectionId) { showSection('voting-section'); return; }
             document.getElementById('positions-container').innerHTML = '';
-            document.getElementById('setup-password').value = '';
-            
             try {
-                const positionsSnap = await db.collection('positions')
-                    .where('electionId', '==', currentElectionId)
-                    .get();
-                
+                const positionsSnap = await db.collection('positions').where('electionId', '==', currentElectionId).get();
                 positionsSnap.forEach(posDoc => {
                     const pos = posDoc.data();
-                    
-                    // Load candidates with their current vote counts
-                    const candidatesWithVotes = [];
-                    pos.candidates?.forEach(cand => {
-                        candidatesWithVotes.push({
-                            ...cand,
-                            votes: cand.votes || 0 // Preserve vote count
-                        });
-                    });
-                    
-                    addPositionField({
-                        id: pos.id,
-                        name: pos.name,
-                        description: pos.description,
-                        candidates: candidatesWithVotes
-                    });
+                    const candidates = (pos.candidates || []).map(c => ({ ...c, votes: c.votes || 0 }));
+                    addPositionField({ id: pos.id, name: pos.name, description: pos.description, candidates: candidates });
                 });
-                
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-info';
-                alertDiv.innerHTML = '📝 <strong>Edit Mode:</strong> You can modify candidate names and bios. Vote counts will be preserved.';
-                document.getElementById('positions-container').prepend(alertDiv);
-                
             } catch (error) {
-                console.error('Load config error:', error);
-                alert('⚠️ Failed to load configuration: ' + error.message);
+                alert('⚠️ Failed to load config');
             }
         }
         
-        /**
-         * Return to voting interface after edit
-         */
         function returnToVotingAfterEdit() {
-            // Refresh voting interface
-            if (currentElectionId) {
-                loadVotingInterface();
-            }
-            
-            // Restore user's previous selections
+            if (currentElectionId) loadVotingInterface();
             setTimeout(() => {
                 if (votingStateBeforeEdit) {
                     Object.entries(votingStateBeforeEdit).forEach(([pos, candId]) => {
-                        const radio = document.querySelector(`#voting-section [name="position_${pos}"][value="${candId}"]`);
+                        const radio = document.querySelector(`[name="position_${pos}"][value="${candId}"]`);
                         if (radio) radio.checked = true;
                     });
                 }
                 votingStateBeforeEdit = null;
                 isEditingFromVoting = false;
             }, 300);
-            
-            // Switch back to voting section
             showSection('voting-section');
             checkAdminAccess();
         }
         
-        // ========================================
-        // 🔄 RESET ELECTION FUNCTIONS
-        // ========================================
-        
-        function openResetModal() {
-            document.getElementById('reset-modal').classList.add('active');
-        }
-        
-        function closeResetModal() {
-            document.getElementById('reset-modal').classList.remove('active');
-            document.getElementById('reset-password-input').value = '';
-        }
+        function openResetModal() { document.getElementById('reset-modal').classList.add('active'); }
+        function closeResetModal() { document.getElementById('reset-modal').classList.remove('active'); document.getElementById('reset-password-input').value = ''; }
         
         async function confirmResetElection() {
             const password = document.getElementById('reset-password-input').value;
-            if (!password) { 
-                alert('⚠️ Enter admin password'); 
-                return; 
-            }
-            
+            if (!password) { alert('⚠️ Enter password'); return; }
             try {
                 const configSnap = await db.collection('system').doc('config').get();
-                if (password !== (configSnap.data()?.adminPassword || 'admin123')) {
-                    alert('❌ Incorrect password'); 
-                    return; 
-                }
-                
-                // Delete all candidates and positions for current election
+                if (password !== (configSnap.data()?.adminPassword || 'admin123')) { alert('❌ Incorrect password'); return; }
                 const batch = db.batch();
-                const electionId = currentElectionId;
-                
-                const candsSnap = await db.collection('candidates')
-                    .where('electionId', '==', electionId)
-                    .get();
+                const candsSnap = await db.collection('candidates').where('electionId', '==', currentElectionId).get();
                 candsSnap.forEach(doc => batch.delete(doc.ref));
-                
-                const posSnap = await db.collection('positions')
-                    .where('electionId', '==', electionId)
-                    .get();
+                const posSnap = await db.collection('positions').where('electionId', '==', currentElectionId).get();
                 posSnap.forEach(doc => batch.delete(doc.ref));
-                
                 await batch.commit();
-                
-                // Reset config
-                await db.collection('system').doc('config').update({
-                    currentElectionId: null,
-                    electionStatus: 'setup'
-                });
-                
-                alert('✅ Election reset successfully');
+                await db.collection('system').doc('config').update({ currentElectionId: null, electionStatus: 'setup' });
+                alert('✅ Reset successfully');
                 closeResetModal();
                 showSection('setup-section');
                 clearSetupForm();
                 currentElectionId = null;
                 isAdmin = false;
                 sessionStorage.removeItem('isAdmin');
-                
             } catch (error) {
-                console.error('Reset error:', error);
-                alert('⚠️ Failed to reset: ' + error.message);
+                alert('⚠️ Failed: ' + error.message);
             }
         }
         
-        // ========================================
-        // 🚀 INITIALIZATION
-        // ========================================
-        
         async function init() {
             showSection('loading');
-            
             try {
-                // Check if system is configured
                 const configSnap = await db.collection('system').doc('config').get();
                 const config = configSnap.data();
-                
                 if (config?.currentElectionId && config?.electionStatus === 'active') {
                     currentElectionId = config.currentElectionId;
                     showSection('voting-section');
@@ -998,16 +530,12 @@
                 } else {
                     showSection('setup-section');
                 }
-                
                 checkAdminAccess();
-                
             } catch (error) {
-                console.error('Init error:', error);
-                document.getElementById('loading-status').textContent = '⚠️ Connection failed - check Firebase config';
+                document.getElementById('loading-status').textContent = '⚠️ Check Firebase config';
             }
         }
         
-        // Start when DOM ready
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>

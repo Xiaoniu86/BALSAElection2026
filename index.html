@@ -327,6 +327,28 @@
         .toast.show { transform: translateY(0); opacity: 1; }
         .toast.error { background: var(--danger); }
         .toast.warning { background: var(--warning); }
+
+        /* Setup Info Box */
+        .setup-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .election-info {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -336,6 +358,11 @@
     <div id="setup-view" class="hidden">
         <div class="setup-box">
             <h2>🛠️ Election Setup</h2>
+            
+            <div id="setup-info" class="setup-info hidden">
+                ⚠️ Existing candidates loaded from database. You can modify and re-save to reset votes.
+            </div>
+            
             <p style="text-align: center; color: #666;">Configure positions and candidates. Once saved, voting begins.</p>
             
             <div class="form-group">
@@ -348,8 +375,8 @@
             <button class="add-position-btn" onclick="addPositionField()">➕ Add New Position</button>
             
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="saveElectionConfig()" style="flex: 2;">🚀 Start Election</button>
-                <button class="secondary" onclick="resetAllFields()" style="flex: 1;">🔄 Reset Form</button>
+                <button onclick="saveElectionConfig()" style="flex: 2;">🚀 Start / Restart Election</button>
+                <button class="secondary" onclick="resetAllFields()" style="flex: 1;">🔄 Clear Form</button>
             </div>
         </div>
     </div>
@@ -361,16 +388,22 @@
             <p style="color: #666;">Select your candidate for each position. Results appear immediately after voting.</p>
         </header>
 
+        <!-- Election Info -->
+        <div id="election-info" class="election-info hidden">
+            📋 Election ID: <strong id="election-id-display">-</strong> | 
+            Started: <strong id="election-date-display">-</strong>
+        </div>
+
         <!-- Reset Button Bar -->
         <div class="reset-bar">
             <h3>⚠️ Admin Only</h3>
-            <button onclick="showResetConfirmation()">🔄 Reset Election (Back to Setup)</button>
+            <button onclick="showResetConfirmation()">🔄 Reset & Edit Candidates</button>
         </div>
 
         <div id="positions-grid" class="positions-grid"></div>
         
         <div style="text-align: center; margin-top: 30px; color: #999;">
-            <p>🔒 Your vote is anonymous. Each position can only be voted once per device.</p>
+            <p>🔒 Your vote is anonymous. Each position can only be voted once per election.</p>
         </div>
     </div>
 
@@ -386,7 +419,7 @@
 <div id="reset-modal" class="modal-overlay hidden">
     <div class="modal-content">
         <h3>⚠️ Reset Election?</h3>
-        <p>This will <strong>DELETE ALL</strong> votes and candidates, and return to Setup page.</p>
+        <p><strong>This will reset all votes and allow everyone to vote again.</strong></p>
         <p style="color: var(--danger); font-size: 0.9rem;">⚠️ This action CANNOT be undone!</p>
         <div class="form-group">
             <label>Enter Admin Password to Confirm:</label>
@@ -394,7 +427,7 @@
         </div>
         <div class="modal-buttons">
             <button class="secondary" onclick="hideResetModal()">Cancel</button>
-            <button class="danger" onclick="confirmResetElection()">🗑️ Yes, Reset Everything</button>
+            <button class="warning" onclick="confirmResetElection()">✅ Confirm Reset</button>
         </div>
     </div>
 </div>
@@ -430,9 +463,11 @@
     const SETUP_PASSWORD = "admin123";
 
     // State
-    let localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || [];
+    let localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
     let currentPositionData = {};
     let voteInProgress = false;
+    let existingCandidates = [];
+    let currentElectionId = null; // ✅ 新增：当前选举 ID
 
     // DOM Elements
     const setupView = document.getElementById('setup-view');
@@ -442,6 +477,10 @@
     const positionsGrid = document.getElementById('positions-grid');
     const resetModal = document.getElementById('reset-modal');
     const toast = document.getElementById('toast');
+    const setupInfo = document.getElementById('setup-info');
+    const electionInfo = document.getElementById('election-info');
+    const electionIdDisplay = document.getElementById('election-id-display');
+    const electionDateDisplay = document.getElementById('election-date-display');
 
     // Show toast notification
     function showToast(message, type = 'success') {
@@ -452,12 +491,19 @@
         }, 3000);
     }
 
+    // Generate unique election ID
+    function generateElectionId() {
+        return 'ELECT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+    }
+
     // --- INITIALIZATION ---
     async function init() {
         try {
             const configDoc = await getDoc(doc(db, "system", "config"));
             if (configDoc.exists()) {
-                showVotingPage();
+                const configData = configDoc.data();
+                currentElectionId = configData.electionId || null;
+                showVotingPage(configData);
             } else {
                 showSetupPage();
             }
@@ -469,20 +515,56 @@
     }
 
     // --- SETUP PAGE LOGIC ---
-    function showSetupPage() {
+    async function showSetupPage() {
         loadingView.classList.add('hidden');
         setupView.classList.remove('hidden');
         votingView.classList.add('hidden');
         
         positionsFormContainer.innerHTML = '';
+        existingCandidates = [];
+        currentElectionId = null;
         
-        DEFAULT_POSITIONS.forEach(pos => {
-            addPositionField(pos);
-        });
+        try {
+            const q = query(collection(db, "candidates"));
+            const snapshot = await getDocs(q);
+            
+            if (!snapshot.empty) {
+                snapshot.forEach(docSnapshot => {
+                    existingCandidates.push({
+                        id: docSnapshot.id,
+                        ...docSnapshot.data()
+                    });
+                });
+                
+                const candidatesByPos = {};
+                existingCandidates.forEach(c => {
+                    if (!candidatesByPos[c.position]) {
+                        candidatesByPos[c.position] = [];
+                    }
+                    candidatesByPos[c.position].push(c);
+                });
+                
+                Object.keys(candidatesByPos).forEach(pos => {
+                    addPositionField(pos, candidatesByPos[pos]);
+                });
+                
+                setupInfo.classList.remove('hidden');
+                showToast("📝 Existing candidates loaded! You can modify and re-save.", 'warning');
+            } else {
+                DEFAULT_POSITIONS.forEach(pos => {
+                    addPositionField(pos);
+                });
+                setupInfo.classList.add('hidden');
+            }
+        } catch (e) {
+            console.error("Error loading existing candidates:", e);
+            DEFAULT_POSITIONS.forEach(pos => {
+                addPositionField(pos);
+            });
+        }
     }
 
-    // Add a position field
-    window.addPositionField = (defaultName = '') => {
+    window.addPositionField = (defaultName = '', candidates = []) => {
         const div = document.createElement('div');
         div.className = 'position-setup-item';
         
@@ -498,7 +580,25 @@
         `;
         positionsFormContainer.appendChild(div);
         
-        addCandidateField(div.querySelector('.secondary'));
+        const candidatesContainer = div.querySelector('.candidates-container');
+        
+        if (candidates.length > 0) {
+            candidates.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'candidate-row';
+                row.innerHTML = `
+                    <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}">
+                    <select class="cand-type">
+                        <option value="pitch" ${c.type === 'pitch' ? 'selected' : ''}>🎤 Pitching (Green)</option>
+                        <option value="nominee" ${c.type === 'nominee' ? 'selected' : ''}>📌 Nominee (Gray)</option>
+                    </select>
+                    <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>
+                `;
+                candidatesContainer.appendChild(row);
+            });
+        } else {
+            addCandidateField(div.querySelector('.secondary'));
+        }
     };
 
     window.removePositionField = (btn) => {
@@ -526,10 +626,11 @@
     };
 
     window.resetAllFields = () => {
-        if (confirm("Reset all form fields?")) {
+        if (confirm("Clear all form fields and start fresh?")) {
             positionsFormContainer.innerHTML = '';
             DEFAULT_POSITIONS.forEach(pos => addPositionField(pos));
-            showToast("Form reset successfully!");
+            setupInfo.classList.add('hidden');
+            showToast("Form cleared!");
         }
     };
 
@@ -575,9 +676,24 @@
         }
 
         try {
+            // ✅ 生成新的选举 ID（每次保存都生成新的）
+            const newElectionId = generateElectionId();
+            
+            if (existingCandidates.length > 0) {
+                showToast("🔄 Updating candidates and resetting votes...", 'warning');
+                
+                const batch = writeBatch(db);
+                existingCandidates.forEach(c => {
+                    batch.delete(doc(db, "candidates", c.id));
+                });
+                await batch.commit();
+            }
+            
             await setDoc(doc(db, "system", "config"), { 
                 status: "active", 
-                createdAt: new Date()
+                createdAt: new Date(),
+                electionId: newElectionId, // ✅ 保存选举 ID
+                lastReset: new Date()
             });
             
             const batchPromises = candidatesData.map(data => 
@@ -585,10 +701,10 @@
             );
             await Promise.all(batchPromises);
 
+            // ✅ 清除本地投票记录（因为选举 ID 变了）
             localStorage.removeItem('ngo_voted_positions');
-            localVotes = [];
             
-            showToast("✅ Election Started Successfully!");
+            showToast("✅ Election " + (existingCandidates.length > 0 ? "Restarted" : "Started") + " Successfully!");
             setTimeout(() => location.reload(), 1500);
             
         } catch (e) {
@@ -598,10 +714,31 @@
     };
 
     // --- VOTING PAGE LOGIC ---
-    function showVotingPage() {
+    function showVotingPage(configData) {
         loadingView.classList.add('hidden');
         votingView.classList.remove('hidden');
         setupView.classList.add('hidden');
+        
+        // ✅ 显示选举信息
+        currentElectionId = configData.electionId || 'UNKNOWN';
+        electionIdDisplay.textContent = currentElectionId;
+        if (configData.createdAt) {
+            const date = configData.createdAt.toDate ? configData.createdAt.toDate() : new Date(configData.createdAt);
+            electionDateDisplay.textContent = date.toLocaleString();
+        }
+        electionInfo.classList.remove('hidden');
+        
+        // ✅ 检查本地存储的选举 ID 是否匹配
+        const storedElectionId = localStorage.getItem('ngo_election_id');
+        if (storedElectionId !== currentElectionId) {
+            // 选举 ID 不匹配，说明是新选举，清除旧投票记录
+            localStorage.removeItem('ngo_voted_positions');
+            localStorage.setItem('ngo_election_id', currentElectionId);
+            localVotes = {};
+            console.log("New election detected, cleared old votes");
+        } else {
+            localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
+        }
         
         loadPositionsRealtime();
     }
@@ -644,7 +781,8 @@
         
         positions.forEach(pos => {
             const candidates = candidatesByPos[pos];
-            const hasVoted = localVotes.some(v => v.trim() === pos.trim());
+            // ✅ 使用对象存储，key 为职位名
+            const hasVoted = localVotes[pos] === true;
             
             const card = document.createElement('div');
             card.className = 'position-card';
@@ -661,12 +799,10 @@
                 const btnText = hasVoted ? '✓ Voted' : 'Vote';
                 const btnClass = hasVoted ? 'voted' : '';
                 
-                // ✅ 关键修复：使用 encodeURIComponent 确保特殊字符安全
                 const safePosition = encodeURIComponent(pos);
                 const safeCandidateId = encodeURIComponent(c.id);
                 const safeName = escapeHtml(c.name);
                 
-                // ✅ 关键修复：onclick 直接调用 window.castVote
                 candidatesHTML += `
                     <div class="candidate-item ${typeClass}">
                         <span class="candidate-name">${safeName}</span>
@@ -709,7 +845,7 @@
         return div.innerHTML;
     }
 
-    // ✅ 关键修复：暴露 castVote 到 window 对象，所有设备都能访问
+    // Cast Vote
     window.castVote = async (position, candidateId) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
@@ -718,8 +854,8 @@
         
         const normalizedPosition = position.trim();
         
-        const alreadyVoted = localVotes.some(v => v.trim() === normalizedPosition);
-        if (alreadyVoted) {
+        // ✅ 检查是否已投过这个职位
+        if (localVotes[normalizedPosition] === true) {
             showToast("You already voted for this position!", 'error');
             return;
         }
@@ -742,12 +878,11 @@
                 votes: increment(1)
             });
 
-            localVotes.push(normalizedPosition);
+            // ✅ 使用对象存储投票记录
+            localVotes[normalizedPosition] = true;
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
             showToast("✅ Vote submitted!");
-            
-            // 重新渲染显示已投票状态
             loadPositionsRealtime();
             
         } catch (e) {
@@ -790,9 +925,8 @@
                 await batch.commit();
             }
             
+            // ✅ 删除 config（触发回到 Setup 页面）
             await deleteDoc(doc(db, "system", "config"));
-            
-            localStorage.removeItem('ngo_voted_positions');
             
             showToast("✅ Reset successfully! Returning to Setup...");
             hideResetModal();

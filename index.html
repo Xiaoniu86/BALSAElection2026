@@ -394,10 +394,13 @@
             Started: <strong id="election-date-display">-</strong>
         </div>
 
-        <!-- Reset Button Bar -->
+        <!-- Reset Button Bar - MODIFIED: Added Edit button -->
         <div class="reset-bar">
             <h3>⚠️ Admin Only</h3>
-            <button onclick="showResetConfirmation()">🔄 Reset & Edit Candidates</button>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <button class="secondary" onclick="showEditCandidates()">✏️ Edit Candidates</button>
+                <button onclick="showResetConfirmation()">🔄 Reset & Restart</button>
+            </div>
         </div>
 
         <div id="positions-grid" class="positions-grid"></div>
@@ -467,7 +470,8 @@
     let currentPositionData = {};
     let voteInProgress = false;
     let existingCandidates = [];
-    let currentElectionId = null; // ✅ 新增：当前选举 ID
+    let currentElectionId = null;
+    let editMode = false; // ✅ 新增：编辑模式标志
 
     // DOM Elements
     const setupView = document.getElementById('setup-view');
@@ -523,6 +527,7 @@
         positionsFormContainer.innerHTML = '';
         existingCandidates = [];
         currentElectionId = null;
+        editMode = false; // ✅ 重置编辑模式
         
         try {
             const q = query(collection(db, "candidates"));
@@ -634,6 +639,60 @@
         }
     };
 
+    // ✅ 新增：从投票页进入编辑模式
+    window.showEditCandidates = async () => {
+        const password = prompt("🔐 Enter Admin Password to Edit Candidates:");
+        if (password !== SETUP_PASSWORD) {
+            showToast("Incorrect Admin Password!", 'error');
+            return;
+        }
+        
+        loadingView.classList.remove('hidden');
+        votingView.classList.add('hidden');
+        setupView.classList.remove('hidden');
+        
+        positionsFormContainer.innerHTML = '';
+        existingCandidates = [];
+        editMode = true; // ✅ 标记为编辑模式
+        
+        try {
+            const q = query(collection(db, "candidates"));
+            const snapshot = await getDocs(q);
+            
+            snapshot.forEach(docSnapshot => {
+                existingCandidates.push({
+                    id: docSnapshot.id,
+                    ...docSnapshot.data()
+                });
+            });
+            
+            const candidatesByPos = {};
+            existingCandidates.forEach(c => {
+                if (!candidatesByPos[c.position]) {
+                    candidatesByPos[c.position] = [];
+                }
+                candidatesByPos[c.position].push(c);
+            });
+            
+            Object.keys(candidatesByPos).forEach(pos => {
+                addPositionField(pos, candidatesByPos[pos]);
+            });
+            
+            // ✅ 更新提示信息
+            setupInfo.textContent = "✏️ Edit Mode: Modify candidates. Existing votes will be PRESERVED.";
+            setupInfo.classList.remove('hidden');
+            showToast("📝 Loaded candidates for editing. Votes will be preserved.", 'warning');
+            
+        } catch (e) {
+            console.error("Error loading candidates:", e);
+            showToast("Error loading candidates: " + e.message, 'error');
+            loadingView.classList.add('hidden');
+            votingView.classList.remove('hidden');
+            setupView.classList.add('hidden');
+        }
+    };
+
+    // ✅ 修改：saveElectionConfig 支持编辑模式
     window.saveElectionConfig = async () => {
         const password = document.getElementById('setup-password').value;
         if (password !== SETUP_PASSWORD) {
@@ -663,7 +722,7 @@
                 const name = row.querySelector('.cand-name').value.trim();
                 const type = row.querySelector('.cand-type').value;
                 if (name) {
-                    candidatesData.push({ position: positionName, name: name, type: type, votes: 0 });
+                    candidatesData.push({ position: positionName, name: name, type: type });
                 }
             });
         });
@@ -676,36 +735,95 @@
         }
 
         try {
-            // ✅ 生成新的选举 ID（每次保存都生成新的）
-            const newElectionId = generateElectionId();
-            
-            if (existingCandidates.length > 0) {
-                showToast("🔄 Updating candidates and resetting votes...", 'warning');
+            // ✅ 区分编辑模式 vs 重启模式
+            if (editMode) {
+                // 🟢 编辑模式：保留votes，只更新候选人信息
+                showToast("🔄 Updating candidates (preserving votes)...", 'warning');
+                
+                // 构建新数据映射: key = position|||name|||type
+                const newDataMap = new Map();
+                candidatesData.forEach(c => {
+                    const key = `${c.position}|||${c.name}|||${c.type}`;
+                    newDataMap.set(key, c);
+                });
                 
                 const batch = writeBatch(db);
-                existingCandidates.forEach(c => {
-                    batch.delete(doc(db, "candidates", c.id));
-                });
+                const processedKeys = new Set();
+                
+                // 1️⃣ 处理现有候选人：更新或删除
+                for (const c of existingCandidates) {
+                    const key = `${c.position}|||${c.name}|||${c.type}`;
+                    if (newDataMap.has(key)) {
+                        // ✅ 更新：只改position/name/type，保留votes
+                        const updates = {
+                            position: newDataMap.get(key).position,
+                            name: newDataMap.get(key).name,
+                            type: newDataMap.get(key).type
+                        };
+                        batch.update(doc(db, "candidates", c.id), updates);
+                        processedKeys.add(key);
+                    } else {
+                        // 🗑️ 删除被移除的候选人
+                        batch.delete(doc(db, "candidates", c.id));
+                    }
+                }
                 await batch.commit();
-            }
-            
-            await setDoc(doc(db, "system", "config"), { 
-                status: "active", 
-                createdAt: new Date(),
-                electionId: newElectionId, // ✅ 保存选举 ID
-                lastReset: new Date()
-            });
-            
-            const batchPromises = candidatesData.map(data => 
-                addDoc(collection(db, "candidates"), data)
-            );
-            await Promise.all(batchPromises);
+                
+                // 2️⃣ 添加新候选人（votes=0）
+                const newCandidates = candidatesData.filter(c => {
+                    const key = `${c.position}|||${c.name}|||${c.type}`;
+                    return !processedKeys.has(key);
+                });
+                
+                for (const c of newCandidates) {
+                    await addDoc(collection(db, "candidates"), {
+                        position: c.position,
+                        name: c.name,
+                        type: c.type,
+                        votes: 0
+                    });
+                }
+                
+                // 3️⃣ 更新config的lastModified（不改变electionId）
+                await updateDoc(doc(db, "system", "config"), {
+                    lastModified: new Date()
+                });
+                
+                showToast("✅ Candidates updated! Votes preserved.", 'success');
+                editMode = false;
+                setTimeout(() => location.reload(), 1500);
+                
+            } else {
+                // 🔴 原始模式：重启选举，生成新ID，重置votes
+                const newElectionId = generateElectionId();
+                
+                if (existingCandidates.length > 0) {
+                    showToast("🔄 Updating candidates and resetting votes...", 'warning');
+                    
+                    const batch = writeBatch(db);
+                    existingCandidates.forEach(c => {
+                        batch.delete(doc(db, "candidates", c.id));
+                    });
+                    await batch.commit();
+                }
+                
+                await setDoc(doc(db, "system", "config"), { 
+                    status: "active", 
+                    createdAt: new Date(),
+                    electionId: newElectionId,
+                    lastReset: new Date()
+                });
+                
+                const batchPromises = candidatesData.map(data => 
+                    addDoc(collection(db, "candidates"), {...data, votes: 0})
+                );
+                await Promise.all(batchPromises);
 
-            // ✅ 清除本地投票记录（因为选举 ID 变了）
-            localStorage.removeItem('ngo_voted_positions');
-            
-            showToast("✅ Election " + (existingCandidates.length > 0 ? "Restarted" : "Started") + " Successfully!");
-            setTimeout(() => location.reload(), 1500);
+                localStorage.removeItem('ngo_voted_positions');
+                
+                showToast("✅ Election " + (existingCandidates.length > 0 ? "Restarted" : "Started") + " Successfully!");
+                setTimeout(() => location.reload(), 1500);
+            }
             
         } catch (e) {
             console.error(e);
@@ -719,7 +837,6 @@
         votingView.classList.remove('hidden');
         setupView.classList.add('hidden');
         
-        // ✅ 显示选举信息
         currentElectionId = configData.electionId || 'UNKNOWN';
         electionIdDisplay.textContent = currentElectionId;
         if (configData.createdAt) {
@@ -728,10 +845,8 @@
         }
         electionInfo.classList.remove('hidden');
         
-        // ✅ 检查本地存储的选举 ID 是否匹配
         const storedElectionId = localStorage.getItem('ngo_election_id');
         if (storedElectionId !== currentElectionId) {
-            // 选举 ID 不匹配，说明是新选举，清除旧投票记录
             localStorage.removeItem('ngo_voted_positions');
             localStorage.setItem('ngo_election_id', currentElectionId);
             localVotes = {};
@@ -781,7 +896,6 @@
         
         positions.forEach(pos => {
             const candidates = candidatesByPos[pos];
-            // ✅ 使用对象存储，key 为职位名
             const hasVoted = localVotes[pos] === true;
             
             const card = document.createElement('div');
@@ -854,7 +968,6 @@
         
         const normalizedPosition = position.trim();
         
-        // ✅ 检查是否已投过这个职位
         if (localVotes[normalizedPosition] === true) {
             showToast("You already voted for this position!", 'error');
             return;
@@ -878,7 +991,6 @@
                 votes: increment(1)
             });
 
-            // ✅ 使用对象存储投票记录
             localVotes[normalizedPosition] = true;
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
@@ -925,7 +1037,6 @@
                 await batch.commit();
             }
             
-            // ✅ 删除 config（触发回到 Setup 页面）
             await deleteDoc(doc(db, "system", "config"));
             
             showToast("✅ Reset successfully! Returning to Setup...");

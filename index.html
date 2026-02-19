@@ -348,7 +348,7 @@
             <button class="add-position-btn" onclick="addPositionField()">➕ Add New Position</button>
             
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="saveElectionConfig()" style="flex: 2;">🚀 Start / Save Election</button>
+                <button onclick="saveElectionConfig()" style="flex: 2;">🚀 Start Election</button>
                 <button class="secondary" onclick="resetAllFields()" style="flex: 1;">🔄 Reset Form</button>
             </div>
         </div>
@@ -364,10 +364,10 @@
         <!-- Reset Button Bar -->
         <div class="reset-bar">
             <h3>⚠️ Admin Only</h3>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
                 <button onclick="showResetConfirmation()">🔄 Reset Election</button>
-                <!-- ✨ 新增：编辑入口按钮 -->
-                <button class="secondary" onclick="openAdminEdit()">✏️ Edit Candidates/Positions</button>
+                <!-- ✨ 唯一新增：编辑按钮 -->
+                <button class="secondary" onclick="openAdminEdit()">✏️ Edit Candidates</button>
             </div>
         </div>
 
@@ -406,10 +406,10 @@
 <!-- Toast Notification -->
 <div id="toast" class="toast"></div>
 
-<!-- Firebase SDKs - 🔧 关键修复：移除末尾空格 -->
+<!-- Firebase SDKs - 保持您原始路径不变 -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, getDocs, updateDoc, increment, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js  ";
+    import { getFirestore, doc, getDoc, setDoc, collection, addDoc, query, getDocs, updateDoc, increment, onSnapshot, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js  ";
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -537,10 +537,13 @@
         }
     };
 
-    // ✨ 新增：加载现有候选人数据到编辑表单（不重置 votes）
+    // =====================================================
+    // ✨ 新增功能 START: 编辑候选人 (3个小函数，完全独立)
+    // =====================================================
+    
+    // 1. 加载现有候选人到编辑表单（带 doc-id，不重置 votes）
     async function loadCandidatesForEdit() {
         positionsFormContainer.innerHTML = '';
-        
         const q = query(collection(db, "candidates"));
         const snapshot = await getDocs(q);
         
@@ -548,24 +551,17 @@
         snapshot.forEach(docSnapshot => {
             const data = docSnapshot.data();
             const pos = data.position;
-            if (!candidatesByPos[pos]) {
-                candidatesByPos[pos] = [];
-            }
+            if (!candidatesByPos[pos]) candidatesByPos[pos] = [];
             candidatesByPos[pos].push({ id: docSnapshot.id, ...data });
         });
         
-        // 为每个职位创建表单字段
-        Object.keys(candidatesByPos).forEach(pos => {
-            addPositionField(pos);
-        });
+        Object.keys(candidatesByPos).forEach(pos => addPositionField(pos));
         
-        // 填充候选人（带 docId 用于更新）
         const positionItems = document.querySelectorAll('.position-setup-item');
         positionItems.forEach(item => {
             const posInput = item.querySelector('.position-title-input');
             const posName = posInput.value.trim();
             const candidatesContainer = item.querySelector('.candidates-container');
-            
             if (candidatesByPos[posName]) {
                 candidatesByPos[posName].forEach(c => {
                     const row = document.createElement('div');
@@ -573,8 +569,8 @@
                     row.innerHTML = `
                         <input type="text" placeholder="Candidate Name" class="cand-name" value="${escapeHtml(c.name)}" data-doc-id="${c.id}">
                         <select class="cand-type">
-                            <option value="pitch" ${c.type === 'pitch' ? 'selected' : ''}>🎤 Pitching (Green)</option>
-                            <option value="nominee" ${c.type === 'nominee' ? 'selected' : ''}>📌 Nominee (Gray)</option>
+                            <option value="pitch" ${c.type==='pitch'?'selected':''}>🎤 Pitching (Green)</option>
+                            <option value="nominee" ${c.type==='nominee'?'selected':''}>📌 Nominee (Gray)</option>
                         </select>
                         <button class="remove-btn" onclick="this.parentElement.remove()">✕</button>
                     `;
@@ -584,36 +580,54 @@
         });
     }
 
-    // ✨ 新增：保存编辑（只更新元数据，保护 votes 字段）
+    // 2. 保存编辑：只更新元数据，绝不触碰 votes 字段
     async function saveCandidateEdits() {
         const positionItems = document.querySelectorAll('.position-setup-item');
-        
         for (const item of positionItems) {
             const positionName = item.querySelector('.position-title-input').value.trim();
             const candidateRows = item.querySelectorAll('.candidate-row');
-            
             for (const row of candidateRows) {
                 const nameInput = row.querySelector('.cand-name');
                 const docId = nameInput?.dataset.docId;
                 if (!docId) continue;
-                
                 const name = nameInput.value.trim();
                 const type = row.querySelector('.cand-type').value;
-                
                 if (name) {
-                    // 🔐 关键：只更新允许修改的字段，绝不触碰 votes
+                    // 🔐 关键：只更新 name/type/position，votes 字段完全隔离
                     await updateDoc(doc(db, "candidates", docId), {
                         position: positionName,
                         name: name,
                         type: type
-                        // 🚫 不包含: votes, voteCount 等投票相关字段
                     });
                 }
             }
         }
     }
 
-    // 🔧 关键修复：保存配置函数 - 分离编辑模式逻辑，避免干扰正常投票
+    // 3. 打开编辑模式：密码验证 + 加载数据 + 切换视图
+    window.openAdminEdit = async () => {
+        const password = prompt("🔒 Enter Admin Password:");
+        if (password !== SETUP_PASSWORD) {
+            showToast("Incorrect Admin Password!", 'error');
+            return;
+        }
+        try {
+            showToast("Loading candidates...");
+            await loadCandidatesForEdit();
+            votingView.classList.add('hidden');
+            setupView.classList.remove('hidden');
+            // 临时修改按钮文字提示编辑模式
+            document.querySelector('#setup-view button[onclick="saveElectionConfig()"]').textContent = '💾 Save Edits (Votes Unchanged)';
+            showToast("✏️ Edit Mode: Change names/types only. Historical votes SAFE.", 'warning');
+        } catch (e) {
+            console.error("Edit load error:", e);
+            showToast("Failed: " + e.message, 'error');
+        }
+    };
+    
+    // ✨ 新增功能 END
+    // =====================================================
+
     window.saveElectionConfig = async () => {
         const password = document.getElementById('setup-password').value;
         if (password !== SETUP_PASSWORD) {
@@ -621,25 +635,23 @@
             return;
         }
 
-        // 检查是否为编辑模式（通过 URL 参数或隐藏字段标记）
-        const isEditMode = document.getElementById('setup-password').dataset.editMode === 'true';
-        
-        // ✨ 编辑模式：只更新元数据，不重置 votes
-        if (isEditMode) {
+        // ✨ 编辑模式分支：只更新元数据，不创建新数据
+        const saveBtn = document.querySelector('#setup-view button[onclick="saveElectionConfig()"]');
+        if (saveBtn.textContent.includes('Save Edits')) {
             try {
                 await saveCandidateEdits();
-                showToast("✅ Candidate info updated! Historical votes unchanged.");
-                // 清除编辑标记
-                document.getElementById('setup-password').dataset.editMode = 'false';
+                // 恢复按钮文字
+                saveBtn.textContent = '🚀 Start Election';
+                showToast("✅ Candidate info updated! Votes unchanged.");
                 setTimeout(() => location.reload(), 1500);
             } catch (e) {
                 console.error(e);
                 showToast("Edit failed: " + e.message, 'error');
             }
-            return;
+            return; // ✅ 编辑模式结束，不执行下方新建逻辑
         }
 
-        // === 原有逻辑完全保持不变 ===
+        // === 以下原有逻辑 100% 保持不变 ===
         const candidatesData = [];
         const positionItems = document.querySelectorAll('.position-setup-item');
         
@@ -807,7 +819,6 @@
         return div.innerHTML;
     }
 
-    // 🔧 关键修复：确保 castVote 全局可访问，所有设备都能调用
     window.castVote = async (position, candidateId) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
@@ -844,41 +855,13 @@
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
             showToast("✅ Vote submitted!");
-            
-            // 重新渲染显示已投票状态（onSnapshot 会自动更新结果）
+            loadPositionsRealtime();
             
         } catch (e) {
             console.error("Voting error:", e);
             showToast("Failed: " + e.message, 'error');
         } finally {
             voteInProgress = false;
-        }
-    };
-
-    // ✨ 新增：打开编辑模式（投票界面 → 设置界面）
-    window.openAdminEdit = async () => {
-        const password = prompt("🔒 Enter Admin Password:");
-        if (password !== SETUP_PASSWORD) {
-            showToast("Incorrect Admin Password!", 'error');
-            return;
-        }
-        
-        try {
-            showToast("Loading candidates for edit...");
-            await loadCandidatesForEdit();
-            
-            // 切换到 setup 视图
-            votingView.classList.add('hidden');
-            setupView.classList.remove('hidden');
-            
-            // 🔧 关键：通过 data 属性标记编辑模式，避免干扰正常流程
-            document.getElementById('setup-password').dataset.editMode = 'true';
-            
-            showToast("✏️ Edit Mode: Modify names/types only. Votes will NOT change.", 'warning');
-            
-        } catch (e) {
-            console.error("Load edit error:", e);
-            showToast("Failed to load: " + e.message, 'error');
         }
     };
 

@@ -404,6 +404,29 @@
             </div>
         </div>
 
+
+        <!-- VIEW 2: VOTING PAGE -->
+        <div id="voting-view" class="hidden">
+            <header style="text-align: center; margin-bottom: 20px;">
+                <h1>🗳️ NGO Annual Election</h1>
+                <p style="color: #666;">Select your candidate for each position. Results appear immediately after voting.</p>
+            </header>
+        <!-- Election Info -->
+        <div id="election-info" class="election-info hidden">
+            📋 Election ID: <strong id="election-id-display">-</strong> | 
+            Started: <strong id="election-date-display">-</strong>
+        </div>
+
+        <!-- Reset Button Bar -->
+        <div class="reset-bar">
+            <h3>⚠️ Admin Only</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <button onclick="showResetConfirmation()">🔄 Reset & Edit Candidates</button>
+                <!-- ✨ 新增编辑按钮 -->
+                <button class="secondary" onclick="openAdminEdit()">✏️ Edit Info Only</button>
+            </div>
+        </div>
+        
         <div id="positions-grid" class="positions-grid"></div>
         
         <div style="text-align: center; margin-top: 30px; color: #999;">

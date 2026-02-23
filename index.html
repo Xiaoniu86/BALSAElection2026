@@ -197,6 +197,11 @@
         .vote-btn.voted {
             background-color: var(--success);
         }
+        /* ✅ 新增：选中状态样式 */
+        .vote-btn.selected {
+            background-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
 
         /* Results */
         .results-area { 
@@ -349,6 +354,31 @@
             text-align: center;
             font-size: 0.9rem;
         }
+        
+        /* ✅ 新增：提交按钮样式 */
+        .submit-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px;
+            background: var(--success);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .submit-btn:hover:not(:disabled) {
+            background: #1e8449;
+        }
+        
+        .selection-count {
+            text-align: center;
+            color: #666;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            min-height: 20px;
+        }
     </style>
 </head>
 <body>
@@ -406,7 +436,7 @@
         <div id="positions-grid" class="positions-grid"></div>
         
         <div style="text-align: center; margin-top: 30px; color: #999;">
-            <p>🔒 Your vote is anonymous. Each position can only be voted once per election.</p>
+            <p>🔒 Your vote is anonymous. You can select multiple candidates per position.</p>
         </div>
     </div>
 
@@ -466,12 +496,15 @@
     const SETUP_PASSWORD = "admin123";
 
     // State
+    // ✅ 修改：localStorage格式改为 {position: [candidateId1, candidateId2]}
     let localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
     let currentPositionData = {};
     let voteInProgress = false;
     let existingCandidates = [];
     let currentElectionId = null;
-    let editMode = false; // ✅ 新增：编辑模式标志
+    let editMode = false;
+    // ✅ 新增：临时选中状态（提交前）
+    let tempSelections = {};
 
     // DOM Elements
     const setupView = document.getElementById('setup-view');
@@ -527,7 +560,7 @@
         positionsFormContainer.innerHTML = '';
         existingCandidates = [];
         currentElectionId = null;
-        editMode = false; // ✅ 重置编辑模式
+        editMode = false;
         
         try {
             const q = query(collection(db, "candidates"));
@@ -639,7 +672,7 @@
         }
     };
 
-    // ✅ 新增：从投票页进入编辑模式
+    // ✅ 从投票页进入编辑模式
     window.showEditCandidates = async () => {
         const password = prompt("🔐 Enter Admin Password to Edit Candidates:");
         if (password !== SETUP_PASSWORD) {
@@ -653,7 +686,7 @@
         
         positionsFormContainer.innerHTML = '';
         existingCandidates = [];
-        editMode = true; // ✅ 标记为编辑模式
+        editMode = true;
         
         try {
             const q = query(collection(db, "candidates"));
@@ -678,7 +711,6 @@
                 addPositionField(pos, candidatesByPos[pos]);
             });
             
-            // ✅ 更新提示信息
             setupInfo.textContent = "✏️ Edit Mode: Modify candidates. Existing votes will be PRESERVED.";
             setupInfo.classList.remove('hidden');
             showToast("📝 Loaded candidates for editing. Votes will be preserved.", 'warning');
@@ -692,7 +724,7 @@
         }
     };
 
-    // ✅ 修改：saveElectionConfig 支持编辑模式
+    // ✅ saveElectionConfig 支持编辑模式
     window.saveElectionConfig = async () => {
         const password = document.getElementById('setup-password').value;
         if (password !== SETUP_PASSWORD) {
@@ -735,12 +767,9 @@
         }
 
         try {
-            // ✅ 区分编辑模式 vs 重启模式
             if (editMode) {
-                // 🟢 编辑模式：保留votes，只更新候选人信息
                 showToast("🔄 Updating candidates (preserving votes)...", 'warning');
                 
-                // 构建新数据映射: key = position|||name|||type
                 const newDataMap = new Map();
                 candidatesData.forEach(c => {
                     const key = `${c.position}|||${c.name}|||${c.type}`;
@@ -750,11 +779,9 @@
                 const batch = writeBatch(db);
                 const processedKeys = new Set();
                 
-                // 1️⃣ 处理现有候选人：更新或删除
                 for (const c of existingCandidates) {
                     const key = `${c.position}|||${c.name}|||${c.type}`;
                     if (newDataMap.has(key)) {
-                        // ✅ 更新：只改position/name/type，保留votes
                         const updates = {
                             position: newDataMap.get(key).position,
                             name: newDataMap.get(key).name,
@@ -763,13 +790,11 @@
                         batch.update(doc(db, "candidates", c.id), updates);
                         processedKeys.add(key);
                     } else {
-                        // 🗑️ 删除被移除的候选人
                         batch.delete(doc(db, "candidates", c.id));
                     }
                 }
                 await batch.commit();
                 
-                // 2️⃣ 添加新候选人（votes=0）
                 const newCandidates = candidatesData.filter(c => {
                     const key = `${c.position}|||${c.name}|||${c.type}`;
                     return !processedKeys.has(key);
@@ -784,7 +809,6 @@
                     });
                 }
                 
-                // 3️⃣ 更新config的lastModified（不改变electionId）
                 await updateDoc(doc(db, "system", "config"), {
                     lastModified: new Date()
                 });
@@ -794,7 +818,6 @@
                 setTimeout(() => location.reload(), 1500);
                 
             } else {
-                // 🔴 原始模式：重启选举，生成新ID，重置votes
                 const newElectionId = generateElectionId();
                 
                 if (existingCandidates.length > 0) {
@@ -852,9 +875,20 @@
             localVotes = {};
             console.log("New election detected, cleared old votes");
         } else {
-            localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
+            // ✅ 兼容旧格式：如果还是 {position: true}，转换为新格式
+            const oldFormat = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
+            localVotes = {};
+            Object.keys(oldFormat).forEach(pos => {
+                if (oldFormat[pos] === true) {
+                    // 旧格式，无法恢复具体候选人，标记为已提交但空数组
+                    localVotes[pos] = [];
+                } else if (Array.isArray(oldFormat[pos])) {
+                    localVotes[pos] = oldFormat[pos];
+                }
+            });
         }
         
+        tempSelections = {}; // 重置临时选中
         loadPositionsRealtime();
     }
 
@@ -896,7 +930,10 @@
         
         positions.forEach(pos => {
             const candidates = candidatesByPos[pos];
-            const hasVoted = localVotes[pos] === true;
+            // ✅ 修改：检查是否已提交（数组存在即为已提交）
+            const hasSubmitted = Array.isArray(localVotes[pos]);
+            // 获取该职位的临时选中（未提交时）
+            const currentSelections = tempSelections[pos] || (hasSubmitted ? localVotes[pos] : []);
             
             const card = document.createElement('div');
             card.className = 'position-card';
@@ -909,19 +946,34 @@
 
             candidates.forEach(c => {
                 const typeClass = c.type === 'pitch' ? 'type-pitch' : 'type-nominee';
-                const btnDisabled = hasVoted ? 'disabled' : '';
-                const btnText = hasVoted ? '✓ Voted' : 'Vote';
-                const btnClass = hasVoted ? 'voted' : '';
+                
+                // ✅ 修改：按钮状态逻辑
+                let btnDisabled, btnText, btnClass;
+                if (hasSubmitted) {
+                    // 已提交：全部禁用，显示Submitted
+                    btnDisabled = 'disabled';
+                    btnText = '✓ Submitted';
+                    btnClass = 'voted';
+                } else {
+                    // 未提交：可toggle选中
+                    const isSelected = currentSelections.includes(c.id);
+                    btnDisabled = '';
+                    btnText = isSelected ? '✓ Selected' : 'Select';
+                    btnClass = isSelected ? 'selected' : '';
+                }
                 
                 const safePosition = encodeURIComponent(pos);
                 const safeCandidateId = encodeURIComponent(c.id);
                 const safeName = escapeHtml(c.name);
                 
+                // ✅ 修改：点击事件改为toggleSelection
                 candidatesHTML += `
                     <div class="candidate-item ${typeClass}">
                         <span class="candidate-name">${safeName}</span>
                         <button class="vote-btn ${btnClass}" 
-                                onclick="window.castVote(decodeURIComponent('${safePosition}'), decodeURIComponent('${safeCandidateId}'))" 
+                                data-position="${safePosition}"
+                                data-candidate="${safeCandidateId}"
+                                onclick="window.toggleSelection(decodeURIComponent('${safePosition}'), decodeURIComponent('${safeCandidateId}'))" 
                                 ${btnDisabled}>
                             ${btnText}
                         </button>
@@ -940,13 +992,32 @@
                 `;
             });
 
-            const resultsSection = hasVoted 
+            // ✅ 修改：未提交时显示选择计数 + 提交按钮
+            let footerHTML = '';
+            if (!hasSubmitted) {
+                const selectedCount = currentSelections.length;
+                footerHTML = `
+                    <div class="selection-count">
+                        ${selectedCount > 0 ? `🗳️ ${selectedCount} candidate${selectedCount>1?'s':''} selected` : 'Select at least one candidate'}
+                    </div>
+                    <button class="submit-btn success" 
+                            onclick="window.submitPositionVote('${escapeHtml(pos)}')"
+                            ${selectedCount === 0 ? 'disabled' : ''}>
+                        ✅ Submit Votes for ${escapeHtml(pos)}
+                    </button>
+                `;
+            } else {
+                footerHTML = `<div class="locked-message">🔒 Votes submitted. Results below:</div>`;
+            }
+
+            const resultsSection = hasSubmitted 
                 ? `<div class="results-area">${resultsHTML}</div>` 
-                : `<div class="locked-message">🔒 Vote to see results</div>`;
+                : `<div class="locked-message">🔒 Submit votes to see results</div>`;
 
             card.innerHTML = `
                 <div class="position-title">${escapeHtml(pos)}</div>
                 ${candidatesHTML}
+                ${footerHTML}
                 ${resultsSection}
             `;
             positionsGrid.appendChild(card);
@@ -959,8 +1030,8 @@
         return div.innerHTML;
     }
 
-    // Cast Vote
-    window.castVote = async (position, candidateId) => {
+    // ✅ 新增：切换候选人选中状态（不提交）
+    window.toggleSelection = (position, candidateId) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
             return;
@@ -968,33 +1039,79 @@
         
         const normalizedPosition = position.trim();
         
-        if (localVotes[normalizedPosition] === true) {
-            showToast("You already voted for this position!", 'error');
+        // 如果已提交，不能修改
+        if (Array.isArray(localVotes[normalizedPosition])) {
+            showToast("Votes already submitted for this position!", 'error');
             return;
         }
 
+        // 验证候选人有效
         if (!currentPositionData[normalizedPosition] || 
             !currentPositionData[normalizedPosition].has(candidateId)) {
             showToast("Invalid candidate!", 'error');
             return;
         }
 
-        if (!confirm(`Confirm your vote for ${position}?`)) {
+        // 初始化临时选中数组
+        if (!tempSelections[normalizedPosition]) {
+            tempSelections[normalizedPosition] = [];
+        }
+        
+        const selections = tempSelections[normalizedPosition];
+        const index = selections.indexOf(candidateId);
+        
+        if (index > -1) {
+            // 取消选中
+            selections.splice(index, 1);
+            showToast("Deselected", 'warning');
+        } else {
+            // 添加选中
+            selections.push(candidateId);
+            showToast("Selected ✓", 'success');
+        }
+        
+        // 重新渲染该职位卡片（更新按钮状态和计数）
+        loadPositionsRealtime();
+    };
+
+    // ✅ 新增：提交某个职位的投票
+    window.submitPositionVote = async (position) => {
+        if (voteInProgress) {
+            showToast("Please wait...", 'warning');
+            return;
+        }
+        
+        const normalizedPosition = position.trim();
+        const selections = tempSelections[normalizedPosition] || [];
+        
+        if (selections.length === 0) {
+            showToast("Please select at least one candidate!", 'error');
+            return;
+        }
+
+        if (!confirm(`Submit votes for ${position}? You selected ${selections.length} candidate${selections.length>1?'s':''}.`)) {
             return;
         }
 
         voteInProgress = true;
 
         try {
-            const candidateRef = doc(db, "candidates", candidateId);
-            await updateDoc(candidateRef, {
-                votes: increment(1)
+            // ✅ 批量更新所有选中候选人的票数
+            const updatePromises = selections.map(candidateId => {
+                const candidateRef = doc(db, "candidates", candidateId);
+                return updateDoc(candidateRef, { votes: increment(1) });
             });
+            
+            await Promise.all(updatePromises);
 
-            localVotes[normalizedPosition] = true;
+            // ✅ 保存已提交状态到localStorage（数组格式）
+            localVotes[normalizedPosition] = [...selections];
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
-            showToast("✅ Vote submitted!");
+            // 清除临时选中
+            delete tempSelections[normalizedPosition];
+            
+            showToast(`✅ Submitted ${selections.length} vote${selections.length>1?'s':''}!`);
             loadPositionsRealtime();
             
         } catch (e) {

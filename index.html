@@ -16,6 +16,8 @@
             --danger: #e74c3c;
             --success: #27ae60;
             --warning: #f39c12;
+            --locked-bg: #ecf0f1;
+            --locked-text: #95a5a6;
         }
 
         * { box-sizing: border-box; }
@@ -197,7 +199,6 @@
         .vote-btn.voted {
             background-color: var(--success);
         }
-        /* ✅ 新增：选中状态样式 */
         .vote-btn.selected {
             background-color: var(--accent);
             box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
@@ -242,6 +243,25 @@
             color: var(--primary);
         }
         
+        /* 🔐 新增：锁定状态样式 */
+        .results-locked .res-bar-fill {
+            background: var(--locked-bg) !important;
+            width: 100% !important;
+            opacity: 0.3;
+        }
+        .results-locked .res-count {
+            color: var(--locked-text) !important;
+            font-family: monospace;
+        }
+        .results-locked .res-name {
+            filter: blur(4px);
+            user-select: none;
+            cursor: not-allowed;
+        }
+        .results-locked .res-name:hover {
+            filter: blur(0);
+        }
+        
         .locked-message { 
             text-align: center; 
             color: #7f8c8d; 
@@ -273,6 +293,19 @@
         }
         .reset-bar button:hover { 
             background: #f8f9fa; 
+        }
+
+        /* 🔐 新增：解锁结果按钮样式 */
+        .unlock-btn {
+            background: var(--warning) !important;
+            color: white !important;
+            font-weight: bold;
+        }
+        .unlock-btn:hover {
+            background: #d68910 !important;
+        }
+        .unlock-btn.unlocked {
+            background: var(--success) !important;
         }
 
         /* Modal */
@@ -355,7 +388,6 @@
             font-size: 0.9rem;
         }
         
-        /* ✅ 新增：提交按钮样式 */
         .submit-btn {
             width: 100%;
             margin-top: 15px;
@@ -378,6 +410,15 @@
             font-size: 0.9rem;
             margin: 10px 0;
             min-height: 20px;
+        }
+        
+        /* 🔐 新增：解锁提示 */
+        .unlock-hint {
+            text-align: center;
+            color: var(--warning);
+            font-size: 0.85rem;
+            margin: 10px 0;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -415,7 +456,7 @@
     <div id="voting-view" class="hidden">
         <header style="text-align: center; margin-bottom: 20px;">
             <h1>🗳️ NGO Annual Election</h1>
-            <p style="color: #666;">Select your candidate for each position. Results appear immediately after voting.</p>
+            <p style="color: #666;">Select your candidate for each position. Results appear after voting.</p>
         </header>
 
         <!-- Election Info -->
@@ -424,19 +465,22 @@
             Started: <strong id="election-date-display">-</strong>
         </div>
 
-        <!-- Reset Button Bar - MODIFIED: Added Edit button -->
+        <!-- 🔐 新增：解锁结果按钮 + 状态提示 -->
         <div class="reset-bar">
             <h3>⚠️ Admin Only</h3>
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                <button id="unlock-results-btn" class="unlock-btn" onclick="showUnlockModal()">🔓 View Results</button>
                 <button class="secondary" onclick="showEditCandidates()">✏️ Edit Candidates</button>
                 <button onclick="showResetConfirmation()">🔄 Reset & Restart</button>
             </div>
         </div>
+        <div id="unlock-hint" class="unlock-hint hidden">🔓 Results are now visible</div>
 
         <div id="positions-grid" class="positions-grid"></div>
         
         <div style="text-align: center; margin-top: 30px; color: #999;">
             <p>🔒 Your vote is anonymous. You can select multiple candidates per position.</p>
+            <p style="font-size:0.9rem; margin-top:5px;">👁️ Results are hidden. Enter admin password to view.</p>
         </div>
     </div>
 
@@ -461,6 +505,23 @@
         <div class="modal-buttons">
             <button class="secondary" onclick="hideResetModal()">Cancel</button>
             <button class="warning" onclick="confirmResetElection()">✅ Confirm Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🔐 新增：解锁结果模态框 -->
+<div id="unlock-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <h3>🔓 View Election Results</h3>
+        <p>Enter admin password to unlock and view all voting results.</p>
+        <p style="color: var(--warning); font-size: 0.9rem;">👁️ This will show results for ALL positions.</p>
+        <div class="form-group">
+            <label>Admin Password:</label>
+            <input type="password" id="unlock-password" placeholder="Enter admin password" onkeypress="if(event.key==='Enter')confirmUnlockResults()">
+        </div>
+        <div class="modal-buttons">
+            <button class="secondary" onclick="hideUnlockModal()">Cancel</button>
+            <button class="success" onclick="confirmUnlockResults()">🔓 Unlock Results</button>
         </div>
     </div>
 </div>
@@ -496,15 +557,16 @@
     const SETUP_PASSWORD = "admin123";
 
     // State
-    // ✅ 修改：localStorage格式改为 {position: [candidateId1, candidateId2]}
     let localVotes = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
     let currentPositionData = {};
     let voteInProgress = false;
     let existingCandidates = [];
     let currentElectionId = null;
     let editMode = false;
-    // ✅ 新增：临时选中状态（提交前）
     let tempSelections = {};
+    
+    // 🔐 新增：结果解锁状态
+    let resultsUnlocked = false;
 
     // DOM Elements
     const setupView = document.getElementById('setup-view');
@@ -513,11 +575,14 @@
     const positionsFormContainer = document.getElementById('positions-form-container');
     const positionsGrid = document.getElementById('positions-grid');
     const resetModal = document.getElementById('reset-modal');
+    const unlockModal = document.getElementById('unlock-modal');
     const toast = document.getElementById('toast');
     const setupInfo = document.getElementById('setup-info');
     const electionInfo = document.getElementById('election-info');
     const electionIdDisplay = document.getElementById('election-id-display');
     const electionDateDisplay = document.getElementById('election-date-display');
+    const unlockBtn = document.getElementById('unlock-results-btn');
+    const unlockHint = document.getElementById('unlock-hint');
 
     // Show toast notification
     function showToast(message, type = 'success') {
@@ -531,6 +596,39 @@
     // Generate unique election ID
     function generateElectionId() {
         return 'ELECT-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substr(2, 4).toUpperCase();
+    }
+
+    // 🔐 新增：检查/设置结果解锁状态
+    function checkResultsUnlocked() {
+        // sessionStorage: 当前标签页有效，关闭后失效（比localStorage更安全）
+        const unlocked = sessionStorage.getItem('ngo_results_unlocked') === 'true';
+        resultsUnlocked = unlocked;
+        updateUnlockUI();
+        return unlocked;
+    }
+    
+    function setResultsUnlocked(value) {
+        resultsUnlocked = value;
+        if (value) {
+            sessionStorage.setItem('ngo_results_unlocked', 'true');
+        } else {
+            sessionStorage.removeItem('ngo_results_unlocked');
+        }
+        updateUnlockUI();
+    }
+    
+    function updateUnlockUI() {
+        if (unlockBtn) {
+            unlockBtn.textContent = resultsUnlocked ? '🔓 Results Visible' : '🔓 View Results';
+            unlockBtn.classList.toggle('unlocked', resultsUnlocked);
+        }
+        if (unlockHint) {
+            unlockHint.classList.toggle('hidden', !resultsUnlocked);
+        }
+        // 重新渲染以应用模糊/清晰样式
+        if (positionsGrid.children.length > 0) {
+            loadPositionsRealtime();
+        }
     }
 
     // --- INITIALIZATION ---
@@ -672,7 +770,6 @@
         }
     };
 
-    // ✅ 从投票页进入编辑模式
     window.showEditCandidates = async () => {
         const password = prompt("🔐 Enter Admin Password to Edit Candidates:");
         if (password !== SETUP_PASSWORD) {
@@ -724,7 +821,6 @@
         }
     };
 
-    // ✅ saveElectionConfig 支持编辑模式
     window.saveElectionConfig = async () => {
         const password = document.getElementById('setup-password').value;
         if (password !== SETUP_PASSWORD) {
@@ -875,12 +971,10 @@
             localVotes = {};
             console.log("New election detected, cleared old votes");
         } else {
-            // ✅ 兼容旧格式：如果还是 {position: true}，转换为新格式
             const oldFormat = JSON.parse(localStorage.getItem('ngo_voted_positions')) || {};
             localVotes = {};
             Object.keys(oldFormat).forEach(pos => {
                 if (oldFormat[pos] === true) {
-                    // 旧格式，无法恢复具体候选人，标记为已提交但空数组
                     localVotes[pos] = [];
                 } else if (Array.isArray(oldFormat[pos])) {
                     localVotes[pos] = oldFormat[pos];
@@ -888,7 +982,8 @@
             });
         }
         
-        tempSelections = {}; // 重置临时选中
+        tempSelections = {};
+        checkResultsUnlocked(); // 🔐 初始化时检查解锁状态
         loadPositionsRealtime();
     }
 
@@ -930,9 +1025,7 @@
         
         positions.forEach(pos => {
             const candidates = candidatesByPos[pos];
-            // ✅ 修改：检查是否已提交（数组存在即为已提交）
             const hasSubmitted = Array.isArray(localVotes[pos]);
-            // 获取该职位的临时选中（未提交时）
             const currentSelections = tempSelections[pos] || (hasSubmitted ? localVotes[pos] : []);
             
             const card = document.createElement('div');
@@ -947,15 +1040,12 @@
             candidates.forEach(c => {
                 const typeClass = c.type === 'pitch' ? 'type-pitch' : 'type-nominee';
                 
-                // ✅ 修改：按钮状态逻辑
                 let btnDisabled, btnText, btnClass;
                 if (hasSubmitted) {
-                    // 已提交：全部禁用，显示Submitted
                     btnDisabled = 'disabled';
                     btnText = '✓ Submitted';
                     btnClass = 'voted';
                 } else {
-                    // 未提交：可toggle选中
                     const isSelected = currentSelections.includes(c.id);
                     btnDisabled = '';
                     btnText = isSelected ? '✓ Selected' : 'Select';
@@ -966,7 +1056,6 @@
                 const safeCandidateId = encodeURIComponent(c.id);
                 const safeName = escapeHtml(c.name);
                 
-                // ✅ 修改：点击事件改为toggleSelection
                 candidatesHTML += `
                     <div class="candidate-item ${typeClass}">
                         <span class="candidate-name">${safeName}</span>
@@ -980,19 +1069,24 @@
                     </div>
                 `;
 
+                // 🔐 修改：根据解锁状态渲染结果
                 const percentage = totalVotes === 0 ? 0 : Math.round((c.votes / totalVotes) * 100);
+                const displayVotes = resultsUnlocked ? (c.votes || 0) : '***';
+                const displayPercentage = resultsUnlocked ? percentage : 0;
+                const barWidth = resultsUnlocked ? `${percentage}%` : '100%';
+                const barClass = resultsUnlocked ? '' : 'results-locked';
+                
                 resultsHTML += `
-                    <div class="result-row">
+                    <div class="result-row ${barClass}">
                         <div class="res-name" title="${safeName}">${safeName}</div>
                         <div class="res-bar-bg">
-                            <div class="res-bar-fill" style="width: ${percentage}%"></div>
+                            <div class="res-bar-fill" style="width: ${barWidth}"></div>
                         </div>
-                        <div class="res-count">${c.votes || 0}</div>
+                        <div class="res-count">${displayVotes}</div>
                     </div>
                 `;
             });
 
-            // ✅ 修改：未提交时显示选择计数 + 提交按钮
             let footerHTML = '';
             if (!hasSubmitted) {
                 const selectedCount = currentSelections.length;
@@ -1007,12 +1101,13 @@
                     </button>
                 `;
             } else {
-                footerHTML = `<div class="locked-message">🔒 Votes submitted. Results below:</div>`;
+                footerHTML = `<div class="locked-message">🔒 Votes submitted. ${resultsUnlocked ? 'Results below:' : 'Unlock password to see results.'}</div>`;
             }
 
+            // 🔐 修改：根据解锁状态显示不同提示
             const resultsSection = hasSubmitted 
                 ? `<div class="results-area">${resultsHTML}</div>` 
-                : `<div class="locked-message">🔒 Submit votes to see results</div>`;
+                : `<div class="locked-message">${resultsUnlocked ? '🔓 Submit votes to see live results' : '🔒 Submit votes to see results (unlock password to view)'}</div>`;
 
             card.innerHTML = `
                 <div class="position-title">${escapeHtml(pos)}</div>
@@ -1030,7 +1125,6 @@
         return div.innerHTML;
     }
 
-    // ✅ 新增：切换候选人选中状态（不提交）
     window.toggleSelection = (position, candidateId) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
@@ -1039,20 +1133,17 @@
         
         const normalizedPosition = position.trim();
         
-        // 如果已提交，不能修改
         if (Array.isArray(localVotes[normalizedPosition])) {
             showToast("Votes already submitted for this position!", 'error');
             return;
         }
 
-        // 验证候选人有效
         if (!currentPositionData[normalizedPosition] || 
             !currentPositionData[normalizedPosition].has(candidateId)) {
             showToast("Invalid candidate!", 'error');
             return;
         }
 
-        // 初始化临时选中数组
         if (!tempSelections[normalizedPosition]) {
             tempSelections[normalizedPosition] = [];
         }
@@ -1061,20 +1152,16 @@
         const index = selections.indexOf(candidateId);
         
         if (index > -1) {
-            // 取消选中
             selections.splice(index, 1);
             showToast("Deselected", 'warning');
         } else {
-            // 添加选中
             selections.push(candidateId);
             showToast("Selected ✓", 'success');
         }
         
-        // 重新渲染该职位卡片（更新按钮状态和计数）
         loadPositionsRealtime();
     };
 
-    // ✅ 新增：提交某个职位的投票
     window.submitPositionVote = async (position) => {
         if (voteInProgress) {
             showToast("Please wait...", 'warning');
@@ -1096,7 +1183,6 @@
         voteInProgress = true;
 
         try {
-            // ✅ 批量更新所有选中候选人的票数
             const updatePromises = selections.map(candidateId => {
                 const candidateRef = doc(db, "candidates", candidateId);
                 return updateDoc(candidateRef, { votes: increment(1) });
@@ -1104,11 +1190,9 @@
             
             await Promise.all(updatePromises);
 
-            // ✅ 保存已提交状态到localStorage（数组格式）
             localVotes[normalizedPosition] = [...selections];
             localStorage.setItem('ngo_voted_positions', JSON.stringify(localVotes));
             
-            // 清除临时选中
             delete tempSelections[normalizedPosition];
             
             showToast(`✅ Submitted ${selections.length} vote${selections.length>1?'s':''}!`);
@@ -1120,6 +1204,34 @@
         } finally {
             voteInProgress = false;
         }
+    };
+
+    // 🔐 新增：解锁结果相关函数
+    window.showUnlockModal = () => {
+        // 如果已解锁，提示并关闭
+        if (resultsUnlocked) {
+            showToast("Results are already visible! 🔓", 'warning');
+            return;
+        }
+        unlockModal.classList.remove('hidden');
+        document.getElementById('unlock-password').value = '';
+        document.getElementById('unlock-password').focus();
+    };
+
+    window.hideUnlockModal = () => {
+        unlockModal.classList.add('hidden');
+    };
+
+    window.confirmUnlockResults = () => {
+        const password = document.getElementById('unlock-password').value;
+        if (password !== SETUP_PASSWORD) {
+            showToast("Incorrect Admin Password!", 'error');
+            return;
+        }
+        
+        setResultsUnlocked(true);
+        hideUnlockModal();
+        showToast("🔓 Results unlocked! All voting data is now visible.", 'success');
     };
 
     // --- RESET FUNCTIONS ---
